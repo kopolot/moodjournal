@@ -9,6 +9,19 @@ services:
       - app_network
     depends_on:
       - postgres
+    hostname: php-fpm
+
+  apache:
+    image: httpd:2.4
+    volumes:
+      - ./public:/var/www/html
+      - ./docker/apache/httpd.conf:/usr/local/apache2/conf/httpd.conf
+    networks:
+      - app_network
+      - nginx-apache-reverse
+    depends_on:
+      - php
+    hostname: local.moodjournal.com
 
   postgres:
     image: postgres:15
@@ -20,9 +33,12 @@ services:
       - postgres_data:/var/lib/postgresql/data
     networks:
       - app_network
+    hostname: db
 
 networks:
   app_network:
+  nginx-apache-reverse:
+    external: true
 
 volumes:
   postgres_data:
