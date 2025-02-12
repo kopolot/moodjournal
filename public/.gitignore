@@ -15,3 +15,4 @@ composer.lock
 composer.phar
 user.ini
 symfony.lock
+.user.ini

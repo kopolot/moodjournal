@@ -1,0 +1,9 @@
+400	BAD_REQUEST	Nieprawidłowe dane wejściowe
+401	UNAUTHORIZED	Użytkownik niezalogowany
+403	FORBIDDEN	Brak dostępu do zasobu
+404	NOT_FOUND	Zasób nie istnieje
+405	METHOD_NOT_ALLOWED	Metoda HTTP nie jest obsługiwana
+409	CONFLICT	Konflikt danych (np. email już istnieje)
+422	VALIDATION_ERROR	Błędne dane (walidacja)
+429	TOO_MANY_REQUESTS	Rate limiting – za dużo zapytań
+500	INTERNAL_SERVER_ERROR	Nieznany błąd serwera

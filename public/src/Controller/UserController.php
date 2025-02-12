@@ -5,6 +5,7 @@ namespace App\Controller;
 use App\Dto\UserRegistrationDto;
 use App\Entity\User;
 use App\Exception\NotFoundException;
+use App\Response\ApiResponse;
 use App\Service\UserService;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -23,13 +24,11 @@ final class UserController extends AbstractController{
     #[Route( '/register', name: 'user_registration', methods: [ 'POST'])]
     public function register(
         #[MapRequestPayload] UserRegistrationDto $userDto,
-    ): JsonResponse{
+    ): ApiResponse{
+        $this->userService->register( $userDto);
 
-        throw new NotFoundException();
-        // $this->userService->register( $userDto);
-
-        return $this->json([
-            
-        ]);
+        return new ApiResponse( 
+            "User succesfully registered.",
+        );
     }
 }

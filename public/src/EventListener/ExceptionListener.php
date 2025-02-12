@@ -2,46 +2,43 @@
 
 namespace App\EventListener;
 
-use App\Exception\AbstractApiException;
+use App\Response\ApiResponse;
+use Psr\Log\LoggerInterface;
 use Symfony\Component\HttpKernel\Event\ExceptionEvent;
-use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpKernel\Exception\HttpExceptionInterface;
+use Jawira\CaseConverter\Convert;
 
 class ExceptionListener
 {
+    public function __construct(
+        protected LoggerInterface $logger
+    )
+    {}
+
     public function onKernelException(ExceptionEvent $event): void
     {
         $exception = $event->getThrowable();
 
-        if ($exception instanceof AbstractApiException) {
-            $event->setResponse(
-                new JsonResponse(
-                    $exception->getResponseContent(), 
-                    $exception->getHttpCode(),
-                    [],
-                )
+        if ($exception instanceof HttpExceptionInterface) {
+            $exceptionName = (new \ReflectionClass( $exception))->getShortName();
+            $response = new ApiResponse(
+                $exception->getMessage(),
+                false,
+                $exception->getStatusCode(),
+                (new Convert( $exceptionName))->toMacro(),
             );
+
+            $event->setResponse($response);
             return;
         }
 
-        // // 🔥 Jeśli to HttpException (np. 404, 403), pobierz status
-        // if ($exception instanceof HttpExceptionInterface) {
-        //     $response = new JsonResponse([
-        //         'success' => false,
-        //         'error' => strtoupper(str_replace(' ', '_', $exception->getMessage())),
-        //         'message' => $exception->getMessage(),
-        //         'data' => null
-        //     ], $exception->getStatusCode());
-
-        //     $event->setResponse($response);
-        //     return;
-        // }
-
-        $internal_error = new \App\Exception\InternalServerError( null, $exception);
-        $response = new JsonResponse(
-            $internal_error->getResponseContent(),
-            $internal_error->getHttpCode(),
-            [],
+        $this->logger->error( $exception);
+        
+        $response = new ApiResponse(
+            'Please contact administrator.',
+            false,
+            500,
+            'INTERNAL_SERVER_ERROR'
         );
 
         $event->setResponse($response);
