@@ -1,0 +1,6 @@
+user:
+  registration:
+    accept_policy: Musisz zaakceptować politykę prywatności.
+    password_mismatch: Hasła nie są takiesame.
+    email_taken: Użytkownik z takim e-mailem już istnieje.
+

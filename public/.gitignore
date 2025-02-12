@@ -12,5 +12,6 @@
 public/adminer.php
 public/info.php
 composer.lock
+composer.phar
 user.ini
 symfony.lock
