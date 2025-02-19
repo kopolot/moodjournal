@@ -16,3 +16,8 @@ composer.phar
 user.ini
 symfony.lock
 .user.ini
+###> lexik/jwt-authentication-bundle ###
+/config/jwt/*.pem
+###< lexik/jwt-authentication-bundle ###
+xdebug
+*.log

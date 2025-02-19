@@ -2,15 +2,15 @@
 
 namespace App\Controller;
 
-use App\Dto\UserRegistrationDto;
+use App\Dto\UserDto;
 use App\Entity\User;
-use App\Exception\NotFoundException;
-use App\Response\ApiResponse;
 use App\Service\UserService;
-use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
-use Symfony\Component\HttpFoundation\JsonResponse;
-use Symfony\Component\HttpKernel\Attribute\MapRequestPayload;
+use App\Response\ApiResponse;
 use Symfony\Component\Routing\Attribute\Route;
+use Symfony\Component\Security\Http\Attribute\CurrentUser;
+use Symfony\Component\HttpKernel\Attribute\MapRequestPayload;
+use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\HttpFoundation\Response;
 
 #[Route('/user')]
 final class UserController extends AbstractController{
@@ -18,17 +18,26 @@ final class UserController extends AbstractController{
     public function __construct(
         protected UserService $userService,
     )
-    {
-    }
+    {}
 
     #[Route( '/register', name: 'user_registration', methods: [ 'POST'])]
     public function register(
-        #[MapRequestPayload] UserRegistrationDto $userDto,
+        #[MapRequestPayload( validationGroups: [ 'create'])] UserDto $userDto,
     ): ApiResponse{
         $this->userService->register( $userDto);
-
         return new ApiResponse( 
-            "User succesfully registered.",
+            "user.registration.success",
         );
+    }
+
+    // login implemented by security and routes
+
+    #[Route( '/checkloggedinuser', methods: [ 'GET'], condition:"'dev' === '%kernel.environment%'" )]
+    public function checkUser(#[CurrentUser] ?User $user){
+        var_dump(
+            $user
+        );
+        die;
+        return new Response;
     }
 }

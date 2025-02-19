@@ -1,0 +1,5 @@
+# user:
+#   registration:
+#     already_exists: The user already exists.
+# server:
+#   internal_error: App error has occured. Please contact administrator.

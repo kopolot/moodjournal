@@ -2,26 +2,26 @@
 
 namespace App\Service;
 
-use App\Dto\UserRegistrationDto;
+use App\Dto\UserDto;
 use App\Entity\User;
 use App\Event\UserRegisteredEvent;
+use App\Exception\UserAlreadyExistsException;
 use App\Repository\UserRepository;
+use Symfony\Bundle\SecurityBundle\Security;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 
 class UserService
 {
     public function __construct(
-        private UserRepository $userRepository,
-        private UserPasswordHasherInterface $passwordHasher,
-        private EventDispatcherInterface $eventDispatcher
-    ) {}
+        protected UserRepository $userRepository,
+        protected UserPasswordHasherInterface $passwordHasher,
+        protected EventDispatcherInterface $eventDispatcher,
+    ){}
 
-    public function register(UserRegistrationDto $userDto): User
-    {
-        if ($this->userRepository->findByEmail($userDto->email)) {
-            // throw new Translate;
-            // error
+    public function register( UserDto $userDto): User{
+        if ( $this->userRepository->findByEmail($userDto->email)) {
+            throw new UserAlreadyExistsException;
         }
 
         $user = new User();

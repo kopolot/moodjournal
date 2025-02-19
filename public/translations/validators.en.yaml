@@ -1,5 +1,5 @@
-user:
-  registration:
-    accept_policy: You must accept the privacy policy.
-    password_mismatch: Passwords do not match.
-    already_exists: The user already exists.
+# user:
+#   registration:
+#     accept_policy: You must accept the privacy policy.
+#     password_mismatch: Passwords do not match.
+#     already_exists: The user already exists.
