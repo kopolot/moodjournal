@@ -7,7 +7,6 @@ use App\Entity\User;
 use App\Event\UserRegisteredEvent;
 use App\Exception\UserAlreadyExistsException;
 use App\Repository\UserRepository;
-use Symfony\Bundle\SecurityBundle\Security;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 
@@ -24,6 +23,8 @@ class UserService
             throw new UserAlreadyExistsException;
         }
 
+        // before registration event
+
         $user = new User();
         $user->setFirstName($userDto->firstName);
         $user->setEmail($userDto->email);
@@ -34,7 +35,7 @@ class UserService
         $user->setVerificationToken(bin2hex(random_bytes(32)));
 
         $this->userRepository->save($user);
-        $this->eventDispatcher->dispatch(new UserRegisteredEvent($user));
+        $this->eventDispatcher->dispatch(new UserRegisteredEvent($user), 'user.registered');
 
         return $user;
     }

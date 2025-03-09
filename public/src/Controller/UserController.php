@@ -27,10 +27,12 @@ final class UserController extends AbstractController{
         $this->userService->register( $userDto);
         return new ApiResponse( 
             "user.registration.success",
+            Response::HTTP_CREATED
         );
     }
 
-    // login implemented by security and routes
+    #[Route( '/login', name: 'user_login', methods: [ 'POST'])]
+    public function login(){}
 
     #[Route( '/checkloggedinuser', methods: [ 'GET'], condition:"'dev' === '%kernel.environment%'" )]
     public function checkUser(#[CurrentUser] ?User $user){
@@ -39,5 +41,12 @@ final class UserController extends AbstractController{
         );
         die;
         return new Response;
+    }
+
+    #[Route( '/get', methods: [ 'GET'])]
+    public function getUserData(#[CurrentUser] User $user): ApiResponse{
+        return new ApiResponse( 
+            (array)$user,
+        );
     }
 }

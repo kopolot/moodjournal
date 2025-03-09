@@ -35,14 +35,13 @@ final class ExceptionListener
 
     public function getHttpExceptionResponse( HttpExceptionInterface $exception): ApiResponse{
         $exceptionName = (new \ReflectionClass( $exception))->getShortName();
-        
         if( is_object( $exception->getPrevious()) && $exception->getPrevious() instanceof \Symfony\Component\Validator\Exception\ValidationFailedException){
             $violations = $exception?->getPrevious()->getViolations();
             $message = $this->getAssertionFailedMessages( $violations);
         }else
             // tu trzeba ogarnac mesages
+            // $message = ( new Convert( $exceptionName))->toDot();
             $message = $exception->getMessage();
-
         $response = new ApiResponse(
             $message,
             false,

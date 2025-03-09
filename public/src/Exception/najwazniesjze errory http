@@ -1,9 +1,74 @@
-400	BAD_REQUEST	Nieprawidłowe dane wejściowe
-401	UNAUTHORIZED	Użytkownik niezalogowany
-403	FORBIDDEN	Brak dostępu do zasobu
-404	NOT_FOUND	Zasób nie istnieje
-405	METHOD_NOT_ALLOWED	Metoda HTTP nie jest obsługiwana
-409	CONFLICT	Konflikt danych (np. email już istnieje)
-422	VALIDATION_ERROR	Błędne dane (walidacja)
-429	TOO_MANY_REQUESTS	Rate limiting – za dużo zapytań
-500	INTERNAL_SERVER_ERROR	Nieznany błąd serwera
+# Lista najważniejszych kodów HTTP
+
+### Kody informacyjne (1xx)
+- **100 Continue**: Serwer otrzymał początkową część zapytania klienta, a klient może kontynuować wysyłanie reszty zapytania.
+- **101 Switching Protocols**: Serwer zgadza się na zmianę protokołu zgodnie z żądaniem klienta.
+- **102 Processing**: Serwer otrzymał i przetwarza zapytanie, ale odpowiedź nie jest jeszcze gotowa.
+- **103 Early Hints**: Serwer wysyła wstępne nagłówki przed właściwą odpowiedzią.
+
+### Kody sukcesu (2xx)
+- **200 OK**: Zapytanie zakończyło się sukcesem, a serwer zwrócił żądane zasoby.
+- **201 Created**: Zapytanie zakończyło się sukcesem, a serwer utworzył nowy zasób.
+- **202 Accepted**: Zapytanie zostało przyjęte do realizacji, ale jeszcze nie zostało zakończone.
+- **203 Non-Authoritative Information**: Serwer zwrócił informacje, które mogą pochodzić z innego źródła.
+- **204 No Content**: Zapytanie zakończyło się sukcesem, ale serwer nie zwraca treści odpowiedzi.
+- **205 Reset Content**: Serwer zwraca sukces bez treści, ale wymaga resetu zawartości klienta.
+- **206 Partial Content**: Serwer zwraca tylko część zasobu, zgodnie z żądaniem klienta.
+- **207 Multi-Status**: Serwer zwraca wielostatusową odpowiedź, która zawiera różne kody statusu dla różnych części zapytania.
+- **208 Already Reported**: Wyniki zapytania zostały już wcześniej zgłoszone.
+- **226 IM Used**: Serwer zwraca zasób po przetworzeniu go przez instancję Delta Encoding.
+
+### Kody przekierowań (3xx)
+- **300 Multiple Choices**: Żądany zasób jest dostępny w różnych wersjach.
+- **301 Moved Permanently**: Żądany zasób został trwale przeniesiony na inny URL.
+- **302 Found**: Żądany zasób jest tymczasowo dostępny pod innym URL.
+- **303 See Other**: Żądany zasób można znaleźć pod innym URL za pomocą metody GET.
+- **304 Not Modified**: Żądany zasób nie został zmodyfikowany od ostatniego żądania.
+- **305 Use Proxy**: Żądany zasób jest dostępny tylko przez serwer proxy.
+- **306 (Unused)**: Kod ten był używany w przeszłości, ale obecnie nie jest używany.
+- **307 Temporary Redirect**: Żądany zasób jest tymczasowo dostępny pod innym URL.
+- **308 Permanent Redirect**: Żądany zasób został trwale przeniesiony na inny URL.
+
+### Kody błędów klienta (4xx)
+- **400 Bad Request**: Serwer nie może zrozumieć żądania z powodu błędnej składni.
+- **401 Unauthorized**: Żądanie wymaga uwierzytelnienia.
+- **402 Payment Required**: Kod zarezerwowany do przyszłego użytku.
+- **403 Forbidden**: Serwer rozumie żądanie, ale odmawia jego wykonania.
+- **404 Not Found**: Żądany zasób nie został znaleziony na serwerze.
+- **405 Method Not Allowed**: Metoda użyta w żądaniu jest niedozwolona dla żądanego zasobu.
+- **406 Not Acceptable**: Żądany zasób nie jest dostępny w formacie, który jest akceptowany przez klienta.
+- **407 Proxy Authentication Required**: Klient musi się uwierzytelnić przy użyciu serwera proxy.
+- **408 Request Timeout**: Serwer czekał na zapytanie klienta zbyt długo i przerwał połączenie.
+- **409 Conflict**: Żądanie nie mogło zostać wykonane z powodu konfliktu w stanie zasobu.
+- **410 Gone**: Żądany zasób został trwale usunięty z serwera.
+- **411 Length Required**: Serwer wymaga podania długości zawartości w nagłówku zapytania.
+- **412 Precondition Failed**: Warunek wstępny określony w nagłówku zapytania nie został spełniony.
+- **413 Payload Too Large**: Żądana jednostka danych jest zbyt duża dla serwera.
+- **414 URI Too Long**: URI żądania jest zbyt długi dla serwera.
+- **415 Unsupported Media Type**: Typ mediów żądanej jednostki danych nie jest obsługiwany przez serwer.
+- **416 Range Not Satisfiable**: Zakres żądany w nagłówku Range nie może zostać spełniony.
+- **417 Expectation Failed**: Oczekiwanie określone w nagłówku Expect nie mogło zostać spełnione przez serwer.
+- **418 I'm a teapot**: Żart primaaprilisowy zdefiniowany w RFC 2324, oznacza, że serwer jest czajnikiem i nie może zaparzyć kawy.
+- **421 Misdirected Request**: Żądanie zostało skierowane do serwera, który nie może na nie odpowiedzieć.
+- **422 Unprocessable Entity**: Serwer rozumie typ zawartości jednostki żądania i składnia jednostki żądania jest poprawna, ale nie może przetworzyć zawartości z powodów związanych z semantyką.
+- **423 Locked**: Zasób jest zablokowany.
+- **424 Failed Dependency**: Żądanie nie powiodło się z powodu niepowodzenia zależności.
+- **425 Too Early**: Serwer nie jest gotowy do obsługi zapytania.
+- **426 Upgrade Required**: Klient musi zmienić protokół na wyższy.
+- **428 Precondition Required**: Serwer wymaga, aby w zapytaniu znajdował się nagłówek warunku wstępnego.
+- **429 Too Many Requests**: Klient wysłał zbyt wiele żądań w określonym czasie.
+- **431 Request Header Fields Too Large**: Nagłówki żądania są zbyt duże.
+- **451 Unavailable For Legal Reasons**: Zasób jest niedostępny ze względów prawnych.
+
+### Kody błędów serwera (5xx)
+- **500 Internal Server Error**: Wystąpił ogólny błąd serwera.
+- **501 Not Implemented**: Serwer nie obsługuje żądanej funkcji.
+- **502 Bad Gateway**: Serwer, działając jako brama lub proxy, otrzymał nieprawidłową odpowiedź od serwera źródłowego.
+- **503 Service Unavailable**: Serwer jest chwilowo niedostępny z powodu przeciążenia lub konserwacji.
+- **504 Gateway Timeout**: Serwer, działając jako brama lub proxy, nie otrzymał na czas odpowiedzi od serwera źródłowego.
+- **505 HTTP Version Not Supported**: Serwer nie obsługuje wersji protokołu HTTP użytej w żądaniu.
+- **506 Variant Also Negotiates**: Błąd serwera w przeprowadzaniu przezroczystych negocjacji zawartości.
+- **507 Insufficient Storage**: Serwer nie może przechowywać żądanej reprezentacji.
+- **508 Loop Detected**: Serwer wykrył nieskończoną pętlę podczas przetwarzania żądania.
+- **510 Not Extended**: Żądanie wymaga rozszerzeń, które nie są obsługiwane przez serwer.
+- **511 Network Authentication Required**: Klient musi się uwierzytelnić, aby uzyskać dostęp do sieci.

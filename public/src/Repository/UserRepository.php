@@ -3,16 +3,15 @@
 namespace App\Repository;
 
 use App\Entity\User;
-use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
+use Kopolot\Utility\Repository\AbstractRepository;
+use Symfony\Bridge\Doctrine\Security\User\UserLoaderInterface;
+use Symfony\Component\Security\Core\User\PasswordUpgraderInterface;
 use Symfony\Component\Security\Core\Exception\UnsupportedUserException;
 use Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface;
-use Symfony\Component\Security\Core\User\PasswordUpgraderInterface;
+use Symfony\Component\Uid\Uuid;
 
-/**
- * @extends ServiceEntityRepository<User>
- */
-class UserRepository extends ServiceEntityRepository implements PasswordUpgraderInterface
+class UserRepository extends AbstractRepository implements PasswordUpgraderInterface, UserLoaderInterface
 {
     public function __construct(ManagerRegistry $registry)
     {
@@ -38,9 +37,13 @@ class UserRepository extends ServiceEntityRepository implements PasswordUpgrader
         return $this->findOneBy(['email' => $email]);
     }
 
-    public function save(User $user): void
+    public function loadUserByIdentifier(string $emailOrUuid): ?User
     {
-        $this->getEntityManager()->persist($user);
-        $this->getEntityManager()->flush();
+        $query = $this->createQueryBuilder('u')->setParameter('query', $emailOrUuid);
+        if( Uuid::isValid( $emailOrUuid))
+            $query->where('u.id = :query');
+        else
+            $query->where('u.email = :query');
+        return $query->getQuery()->getOneOrNullResult();
     }
 }
