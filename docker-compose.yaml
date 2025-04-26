@@ -37,6 +37,14 @@ services:
       - app_network
     hostname: db
 
+  mailhog:
+    image: mailhog/mailhog
+    networks:
+      - app_network
+    hostname: mailhog
+    environment:
+      MH_UI_WEB_PATH: mailhog
+
 networks:
   app_network:
   nginx-apache-reverse:

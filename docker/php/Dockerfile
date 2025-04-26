@@ -13,11 +13,14 @@ RUN apt-get install -y \
 RUN docker-php-ext-install \
     pdo_pgsql \
     pgsql
-RUN pecl install xdebug; "zend_extension=xdebug.so" > /usr/local/etc/php/conf.d/docker-php-ext-xdebug.ini
-RUN adduser --shell $(which bash) --disabled-pasdsword --gecos "" --uid ${UID} container && \
-    usermod -aG sudo container
+RUN pecl install xdebug;
+RUN docker-php-ext-enable xdebug
+RUN adduser --shell $(which bash) --disabled-password --gecos "" --uid ${UID} container
+RUN usermod -aG sudo container
 RUN echo "container ALL=(ALL) NOPASSWD: ALL" >> /etc/sudoers
-RUN sudo -u container echo "source /etc/profile.d/bash_completion.sh" >> /home/container/.bashrc
+# RUN sudo -u container echo "source /etc/profile.d/bash_completion.sh" >> /home/container/.bashrc
+RUN echo alias sudo="sudo -E" > /etc/profile.d/00sudo.sh
+# to jest chujowo
 RUN mkdir /var/lib/php /var/lib/php/volume
 RUN chown container:container /var/lib/php/volume; chmod 1733 /var/lib/php/volume
 COPY docker/php/php.ini /usr/local/etc/php/php.ini
