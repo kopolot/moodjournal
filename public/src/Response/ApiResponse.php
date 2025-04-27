@@ -15,7 +15,7 @@ class ApiResponse extends JsonResponse{
      * @param array $data
      */
     public function __construct(
-        array|string $message,
+        array|string|object $message,
         bool $success = true,
         int $statusCode = 200,
         string $error = '',

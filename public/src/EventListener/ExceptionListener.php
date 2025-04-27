@@ -19,12 +19,9 @@ final class ExceptionListener
 
     public function onKernelException(ExceptionEvent $event) : void{
         $exception = $event->getThrowable();
-        //  format   object.prop.validator.violation
         if ($exception instanceof HttpExceptionInterface) {
-            // tu trzeba to oogarnac
             $response = $this->getHttpExceptionResponse( $exception);
             $event->setResponse($response);
-            return;
         }
 
         if( 'prod' === $this->environment){
@@ -35,13 +32,7 @@ final class ExceptionListener
 
     public function getHttpExceptionResponse( HttpExceptionInterface $exception): ApiResponse{
         $exceptionName = (new \ReflectionClass( $exception))->getShortName();
-        if( is_object( $exception->getPrevious()) && $exception->getPrevious() instanceof \Symfony\Component\Validator\Exception\ValidationFailedException){
-            $violations = $exception?->getPrevious()->getViolations();
-            $message = $this->getAssertionFailedMessages( $violations);
-        }else
-            // tu trzeba ogarnac mesages
-            // $message = ( new Convert( $exceptionName))->toDot();
-            $message = $exception->getMessage();
+        $message = explode( "\n", $exception->getMessage());
         $response = new ApiResponse(
             $message,
             false,
@@ -53,7 +44,7 @@ final class ExceptionListener
 
     protected function getServerErrorResponse(): ApiResponse{
         return new ApiResponse(
-            'server.internal_error',
+            \App\Translation\ServerTranslationKeys::SERVER_INTERNAL_SERVER_ERROR,
             false,
             500,
             'INTERNAL_SERVER_ERROR'

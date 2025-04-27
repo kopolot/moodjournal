@@ -2,3 +2,4 @@ RewriteEngine On
 
 RewriteCond %{REQUEST_URI} !^/public/
 RewriteRule ^(.*)$ /public/$1 [L]
+SetEnvIf Authorization "(.*)" HTTP_AUTHORIZATION=$1

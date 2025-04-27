@@ -1,0 +1,6 @@
+email:
+  registration:
+    subject: 'Witamy w naszym serwisie!'
+    thank_you: 'Dziękujemy za rejestrację w naszym serwisie. Prosimy o potwierdzenie swojego adresu e-mail klikając w poniższy link:'
+    confirm_button: 'Potwierdź adres e-mail'
+    verification_link: 'Link do weryfikacji'

@@ -5,13 +5,11 @@ namespace App\Repository;
 use App\Entity\User;
 use Doctrine\Persistence\ManagerRegistry;
 use Kopolot\Utility\Repository\AbstractRepository;
-use Symfony\Bridge\Doctrine\Security\User\UserLoaderInterface;
 use Symfony\Component\Security\Core\User\PasswordUpgraderInterface;
 use Symfony\Component\Security\Core\Exception\UnsupportedUserException;
 use Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface;
-use Symfony\Component\Uid\Uuid;
 
-class UserRepository extends AbstractRepository implements PasswordUpgraderInterface, UserLoaderInterface
+class UserRepository extends AbstractRepository implements PasswordUpgraderInterface
 {
     public function __construct(ManagerRegistry $registry)
     {
@@ -35,15 +33,5 @@ class UserRepository extends AbstractRepository implements PasswordUpgraderInter
     public function findByEmail(string $email): ?User
     {
         return $this->findOneBy(['email' => $email]);
-    }
-
-    public function loadUserByIdentifier(string $emailOrUuid): ?User
-    {
-        $query = $this->createQueryBuilder('u')->setParameter('query', $emailOrUuid);
-        if( Uuid::isValid( $emailOrUuid))
-            $query->where('u.id = :query');
-        else
-            $query->where('u.email = :query');
-        return $query->getQuery()->getOneOrNullResult();
     }
 }

@@ -4,6 +4,8 @@
 # Put parameters here that don't need to change on each machine where the app is deployed
 # https://symfony.com/doc/current/best_practices.html#use-parameters-for-application-configuration
 parameters:
+    mailer.from_address: '%env(MAILER_FROM_ADDRESS)%'
+    app.url: '%env(APP_URL)%'
 
 services:
     # default configuration for services in *this* file
@@ -27,3 +29,28 @@ services:
             - { name: kernel.event_listener, event: kernel.exception, method: onKernelException}
         arguments:
             $environment: "%kernel.environment%"
+
+    App\EventListener\UserEventsListener:
+        arguments:
+            $mailerFromAddress: '%mailer.from_address%'
+            $appUrl: '%app.url%'
+
+    app.jwt_is_active_authenticator:
+        class: App\Security\Authenticator\JWTIsActiveAuthenticator
+        parent: lexik_jwt_authentication.security.jwt_authenticator
+
+    security.authenticator.json_login.not_logged_in:
+    # brzydkie ale dziala
+        class: App\Security\Authenticator\CustomJsonLoginAuthenticator
+        parent: security.authenticator.json_login
+        # factory: [ '@Symfony\Bundle\SecurityBundle\DependencyInjection\Security\Factory\JsonLoginFactory', 'createAuthenticator']
+        arguments:
+            $userProvider: '@security.user.provider.concrete.email_provider'
+            $successHandler: '@lexik_jwt_authentication.handler.authentication_success'
+            $failureHandler: '@lexik_jwt_authentication.handler.authentication_failure'
+            $options: 
+                username_path: email
+                check_path: user.login
+                use_forward: false
+                login_path: /login
+                password_path: password

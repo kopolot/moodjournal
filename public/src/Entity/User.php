@@ -9,6 +9,7 @@ use App\Repository\UserRepository;
 use Symfony\Bridge\Doctrine\Types\UuidType;
 use Symfony\Component\Security\Core\User\UserInterface;
 use Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface;
+use Symfony\Component\Serializer\Annotation\Groups;
 
 #[ORM\Entity(repositoryClass: UserRepository::class)]
 #[ORM\Table(name: '`user`')]
@@ -35,21 +36,27 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     private ?string $password = null;
 
     #[ORM\Column(length: 255)]
+    #[Groups('user:read')]
     private ?string $email = null;
 
     #[ORM\Column(length: 255)]
+    #[Groups('user:read')]
     private ?string $firstname = null;
 
     #[ORM\Column]
+    #[Groups('user:read')]
     private ?\DateTimeImmutable $createdAt = null;
 
     #[ORM\Column]
+    #[Groups('user:read')]
     private ?\DateTimeImmutable $updatedAt = null;
 
     #[ORM\Column]
+    #[Groups('user:read')]
     private ?bool $isVerified = null;
 
     #[ORM\Column]
+    #[Groups('user:read')]
     private ?bool $isActive = null;
 
     #[ORM\Column(length: 255, nullable: true)]
@@ -59,9 +66,11 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     private ?string $resetPasswordToken = null;
 
     #[ORM\Column(type: Types::DATETIME_MUTABLE, nullable: true)]
+    #[Groups('user:read')]
     private ?\DateTimeInterface $lastLogin = null;
 
     #[ORM\Column(nullable: true)]
+    #[Groups('user:read')]
     private ?array $preferences = null;
 
     public function getId(): ?Uuid

@@ -3,3 +3,10 @@
 #     already_exists: The user already exists.
 # server:
 #   internal_error: App error has occured. Please contact administrator.
+
+email:
+  registration:
+    subject: 'Welcome to our service!'
+    thank_you: 'Thank you for registering on our service. Please confirm your email address by clicking the link below:'
+    confirm_button: 'Confirm email address'
+    verification_link: 'Verification link'

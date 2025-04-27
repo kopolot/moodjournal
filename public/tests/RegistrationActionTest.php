@@ -47,7 +47,7 @@ class RegistrationActionTest extends WebTestCase
         $this->assertArrayHasKey('success', $responseData);
         $this->assertTrue($responseData['success']);
         $this->assertArrayHasKey('message', $responseData);
-        $this->assertContains('user.registration.success', $responseData['message']);
+        $this->assertContains(\App\Translation\UserTranslationKeys::USER_REGISTRATION_SUCCESS, $responseData['message']);
         
         // Sprawdź czy użytkownik został utworzony w bazie danychz
         $user = $this->userRepository->findOneBy(['email' => $email]);

@@ -5,20 +5,26 @@ security:
     # https://symfony.com/doc/current/security.html#loading-the-user-the-user-provider
     providers:
         # used to reload user from session & other features (e.g. switch_user)
-        default_provider:
+        email_provider:
             entity:
                 class: App\Entity\User
+                property: email
+        token_provider:
+            entity:
+                class: App\Entity\User
+                property: id 
 
     firewalls:
         dev:
             pattern: ^/(_(profiler|wdt)|css|images|js)/
             security: false
         not_logged_in:
-            pattern: ^/user/(login|register)
+            pattern: ^/user/(login)
             stateless: true
-            provider: default_provider
+            provider: email_provider
             json_login:
-                check_path: user_login
+                # change it in services.yaml
+                check_path: user.login
                 success_handler: lexik_jwt_authentication.handler.authentication_success
                 failure_handler: lexik_jwt_authentication.handler.authentication_failure
                 username_path: email
@@ -27,8 +33,9 @@ security:
                 interval: "30 minutes"
         main:
             jwt: ~
+                # authenticator: app.jwt_is_active_authenticator
             stateless: true
-            provider: default_provider
+            provider: token_provider
             # activate different ways to authenticate
             # https://symfony.com/doc/current/security.html#the-firewall
 
@@ -38,7 +45,7 @@ security:
     # Easy way to control access for large sections of your site
     # Note: Only the *first* access control that matches will be used
     access_control:
-        - { path: ^/user/(login|register|checkloggedinuser), roles: PUBLIC_ACCESS }
+        - { path: ^/user/(login|register|checkloggedinuser|verify|resetpassword), roles: PUBLIC_ACCESS }
         - { path: ^/user, roles: IS_AUTHENTICATED_FULLY }
 
 when@test:
