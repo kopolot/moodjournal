@@ -1,4 +1,4 @@
-FROM php:8.2-fpm
+FROM php:8.3-fpm
 ARG UID
 
 RUN apt update
@@ -9,10 +9,14 @@ RUN apt-get install -y \
     git \
     sudo \
     bash-completion \
-    mariadb-client    
+    mariadb-client \
+    libicu-dev \
+    nano
 RUN docker-php-ext-install \
     pdo_pgsql \
-    pgsql
+    pgsql \
+    bcmath \
+    intl
 RUN pecl install xdebug;
 RUN docker-php-ext-enable xdebug
 RUN adduser --shell $(which bash) --disabled-password --gecos "" --uid ${UID} container
@@ -26,5 +30,6 @@ RUN chown container:container /var/lib/php/volume; chmod 1733 /var/lib/php/volum
 COPY docker/php/php.ini /usr/local/etc/php/php.ini
 
 USER container
+RUN echo 'alias sudo="sudo -E"' >> /home/container/.bashrc
 
 WORKDIR /var/www/html
