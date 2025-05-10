@@ -45,6 +45,14 @@ services:
     environment:
       MH_UI_WEB_PATH: mailhog
 
+  adminer:
+    image: adminer
+    networks:
+      - app_network
+    hostname: adminer
+    environment:
+      ADMINER_DEFAULT_SERVER: db
+
 networks:
   app_network:
     ipam:
