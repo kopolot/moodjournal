@@ -21,7 +21,7 @@ final class UserControllerTest extends WebTestCase
         $entityManager = static::getContainer()->get(EntityManagerInterface::class);
         
         // Przygotuj dane testowe
-        $firstName = 'Test';
+        $firstname = 'Test';
         $email = 'test.user' . uniqid() . '@example.com';
         $password = 'Test1234!';
         
@@ -33,7 +33,7 @@ final class UserControllerTest extends WebTestCase
             [],
             ['CONTENT_TYPE' => 'application/json'],
             json_encode([
-                'firstName' => $firstName,
+                'firstname' => $firstname,
                 'email' => $email,
                 'password' => $password,
                 'repeatPassword' => $password,
@@ -57,7 +57,7 @@ final class UserControllerTest extends WebTestCase
         
         $this->assertNotNull($user);
         /** @var User $user */
-        $this->assertEquals($firstName, $user->getFirstName());
+        $this->assertEquals($firstname, $user->getFirstName());
         $this->assertEquals($email, $user->getEmail());
         
         // Sprawdź czy hasło jest zahaszowane

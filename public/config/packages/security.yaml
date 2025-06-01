@@ -47,6 +47,7 @@ security:
     access_control:
         - { path: ^/user/(login|register|checkloggedinuser|verify|resetpassword), roles: PUBLIC_ACCESS }
         - { path: ^/user, roles: IS_AUTHENTICATED_FULLY }
+        - { path: ^/translations, roles: PUBLIC_ACCESS }
 
 when@test:
     security:

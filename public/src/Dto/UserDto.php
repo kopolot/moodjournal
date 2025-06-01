@@ -8,7 +8,7 @@ use App\Translation\UserTranslationKeys;
 class UserDto{
     #[Assert\NotBlank( groups: [ 'create'], message: UserTranslationKeys::USER_FIRST_NAME_NOT_BLANK)]
     #[Assert\Length(min: 2, max: 50, groups: [ 'create'], minMessage: UserTranslationKeys::USER_FIRST_NAME_LENGTH, maxMessage: UserTranslationKeys::USER_FIRST_NAME_LENGTH )]
-    public string $firstName;
+    public string $firstname;
 
     #[Assert\NotBlank( groups: [ 'create', 'login', 'reset_password'], message: UserTranslationKeys::USER_EMAIL_NOT_BLANK)]
     #[Assert\Email( groups: [ 'create'], message: UserTranslationKeys::USER_EMAIL_INVALID)]

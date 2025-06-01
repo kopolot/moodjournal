@@ -28,7 +28,7 @@ class UserService
         // before registration event
 
         $user = new User();
-        $user->setFirstName($userDto->firstName);
+        $user->setFirstName($userDto->firstname);
         $user->setEmail($userDto->email);
         $user->setPassword($this->passwordHasher->hashPassword($user, $userDto->password));
         $user->setRoles(['ROLE_USER']);
