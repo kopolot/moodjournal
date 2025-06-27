@@ -1,0 +1,15 @@
+{# {% extends 'emails/base.html.twig' %} #}
+
+{% block content %}
+    <h1>{{ 'email.account_disabled.title'|trans }}</h1>
+    
+    <p>{{ 'email.account_disabled.greeting'|trans({'%name%': user.firstName}) }},</p>
+    
+    <p>{{ 'email.account_disabled.message'|trans }}</p>
+    
+    <p>{{ 'email.account_disabled.info'|trans }}</p>
+    
+    <p>{{ 'email.account_disabled.contact'|trans }}</p>
+    
+    <p>{{ 'email.signature'|trans }}</p>
+{% endblock %}

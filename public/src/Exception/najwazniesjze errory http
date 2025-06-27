@@ -48,7 +48,7 @@
 - **415 Unsupported Media Type**: Typ mediów żądanej jednostki danych nie jest obsługiwany przez serwer.
 - **416 Range Not Satisfiable**: Zakres żądany w nagłówku Range nie może zostać spełniony.
 - **417 Expectation Failed**: Oczekiwanie określone w nagłówku Expect nie mogło zostać spełnione przez serwer.
-- **418 I'm a teapot**: Żart primaaprilisowy zdefiniowany w RFC 2324, oznacza, że serwer jest czajnikiem i nie może zaparzyć kawy.
+- **418 I''m a teapot**: Żart primaaprilisowy zdefiniowany w RFC 2324, oznacza, że serwer jest czajnikiem i nie może zaparzyć kawy.
 - **421 Misdirected Request**: Żądanie zostało skierowane do serwera, który nie może na nie odpowiedzieć.
 - **422 Unprocessable Entity**: Serwer rozumie typ zawartości jednostki żądania i składnia jednostki żądania jest poprawna, ale nie może przetworzyć zawartości z powodów związanych z semantyką.
 - **423 Locked**: Zasób jest zablokowany.

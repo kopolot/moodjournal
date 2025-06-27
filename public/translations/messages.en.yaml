@@ -10,3 +10,11 @@ email:
     thank_you: 'Thank you for registering on our service. Please confirm your email address by clicking the link below:'
     confirm_button: 'Confirm email address'
     verification_link: 'Verification link'
+  account_disabled:
+    subject: 'Your account has been disabled'
+    title: 'Account Disabled'
+    greeting: 'Hello %name%'
+    message: 'We would like to inform you that your account has been disabled in our system.'
+    info: 'If you believe this is an error or would like to know more about why your account was disabled, please read our terms of service or contact our support team.'
+    contact: 'If you have any questions, please do not hesitate to contact us.'
+  signature: 'Best regards, The Support Team'

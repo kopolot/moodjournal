@@ -6,6 +6,7 @@
 parameters:
     mailer.from_address: '%env(MAILER_FROM_ADDRESS)%'
     app.url: '%env(APP_URL)%'
+    app.days_to_delete_disabled_user: '%env(APP_DAYS_TO_DELETE_DISABLED_USER)%'
 
 services:
     # default configuration for services in *this* file

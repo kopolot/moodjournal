@@ -74,6 +74,16 @@ final class UserController extends AbstractController{
         );
     }
 
+    #[Route( '/forgotpassword', methods: [ 'POST'], name: 'user.forgot_password')]
+    public function forgotPassword(
+        #[MapRequestPayload( validationGroups: [ 'reset_password'])] UserDto $userDto
+    ): ApiResponse{
+        $this->userService->sendResetPasswordEmail( $userDto);
+        return new ApiResponse(
+            UserTranslationKeys::USER_FORGOT_PASSWORD_SUCCESS ?? '',
+        );
+    }
+
     #[Route( '/resetpassword', methods: [ 'POST'], name: 'user.reset_password')]
     public function resetPassword(
         #[MapRequestPayload( validationGroups: [ 'reset_password'])] UserDto $userDto
@@ -81,6 +91,16 @@ final class UserController extends AbstractController{
         $this->userService->resetPassword( $userDto);
         return new ApiResponse(
             UserTranslationKeys::USER_RESET_PASSWORD_SUCCESS,
+            true,
+            Response::HTTP_OK
+        );
+    }
+
+    #[Route('/disableuser', methods: ['POST'], name: 'user.disable')]
+    public function disableUser(#[CurrentUser] User $user): ApiResponse{
+        $this->userService->disableUser( $user);
+        return new ApiResponse(
+            UserTranslationKeys::USER_DISABLE_SUCCESS,
             true,
             Response::HTTP_OK
         );

@@ -11,14 +11,18 @@ RUN apt-get install -y \
     bash-completion \
     mariadb-client \
     libicu-dev \
-    nano
+    nano \
+    postgresql-common \
+    postgresql-client \
+    librabbitmq-dev
 RUN docker-php-ext-install \
     pdo_pgsql \
     pgsql \
     bcmath \
     intl
-RUN pecl install xdebug;
-RUN docker-php-ext-enable xdebug
+RUN pecl install xdebug
+RUN pecl install amqp
+RUN docker-php-ext-enable xdebug amqp
 RUN adduser --shell $(which bash) --disabled-password --gecos "" --uid ${UID} container
 RUN usermod -aG sudo container
 RUN echo "container ALL=(ALL) NOPASSWD: ALL" >> /etc/sudoers

@@ -10,7 +10,7 @@ class UserDto{
     #[Assert\Length(min: 2, max: 50, groups: [ 'create'], minMessage: UserTranslationKeys::USER_FIRST_NAME_LENGTH, maxMessage: UserTranslationKeys::USER_FIRST_NAME_LENGTH )]
     public string $firstname;
 
-    #[Assert\NotBlank( groups: [ 'create', 'login', 'reset_password'], message: UserTranslationKeys::USER_EMAIL_NOT_BLANK)]
+    #[Assert\NotBlank( groups: [ 'create', 'login', 'forgotpassword'], message: UserTranslationKeys::USER_EMAIL_NOT_BLANK)]
     #[Assert\Email( groups: [ 'create'], message: UserTranslationKeys::USER_EMAIL_INVALID)]
     public string $email;
 

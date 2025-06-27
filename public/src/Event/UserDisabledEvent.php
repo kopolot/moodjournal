@@ -1,13 +1,15 @@
 <?php
 
-namespace App\Event;
-
 use App\Entity\User;
 use Symfony\Contracts\EventDispatcher\Event;
 
-final class UserRegisteredEvent extends Event
+final class UserDisabledEvent extends Event
 {
-    public function __construct(protected User $user) {}
+
+    public function __construct(
+        private User $user
+    )
+    {}
 
     public function getUser(): User
     {

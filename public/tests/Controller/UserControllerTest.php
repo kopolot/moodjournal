@@ -64,6 +64,7 @@ final class UserControllerTest extends WebTestCase
         $this->assertNotEquals($password, $user->getPassword());
         
         // Sprawdź czy email weryfikacyjny został wysłany
+        // to nie dziala : (
         $this->assertEmailCount(1);
         $email = $this->getMailerMessage();
         

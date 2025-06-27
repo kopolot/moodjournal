@@ -13,6 +13,8 @@ use Symfony\Component\Serializer\Annotation\Groups;
 
 #[ORM\Entity(repositoryClass: UserRepository::class)]
 #[ORM\Table(name: '`user`')]
+#[ORM\Index(columns: ['email'], name: 'idx_user_email')]
+#[ORM\Index(columns: ['is_active', 'is_verified', 'disabled_at'], name: 'idx_user_is_active')]
 #[ORM\HasLifecycleCallbacks]
 class User implements UserInterface, PasswordAuthenticatedUserInterface
 {
@@ -35,7 +37,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\Column]
     private ?string $password = null;
 
-    #[ORM\Column(length: 255)]
+    #[ORM\Column(length: 255, unique: true)]
     #[Groups('user:read')]
     private ?string $email = null;
 
@@ -73,6 +75,19 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[Groups('user:read')]
     private ?array $preferences = null;
 
+    #[ORM\Column(nullable: true)]
+    private ?\DateTimeImmutable $disabledAt = null;
+
+    // public function getId(): string
+    // {
+    //     return $this->id->toRfc4122();
+    // }
+
+    // public function getUuid(): ?Uuid
+    // {
+    //     return $this->id;
+    // }
+
     public function getId(): ?Uuid
     {
         return $this->id;
@@ -85,7 +100,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
      */
     public function getUserIdentifier(): string
     {
-        return (string) $this->id;
+        return $this->id->toRfc4122();
     }
 
     /**
@@ -192,6 +207,12 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
 
     public function setIsActive(bool $isActive): static
     {
+        if( $this->isActive() && !$isActive )
+        {
+            $this->disabledAt = new \DateTimeImmutable;
+        } else if ( !$this->isActive() && $isActive ) {
+            $this->disabledAt = null;
+        }
         $this->isActive = $isActive;
 
         return $this;
@@ -255,5 +276,10 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
         $this->email = $email;
 
         return $this;
+    }
+
+    public function getDisabledAt(): ?\DateTimeImmutable
+    {
+        return $this->disabledAt;
     }
 }

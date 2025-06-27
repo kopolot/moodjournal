@@ -16,13 +16,17 @@ final class UserTranslationKeys{
     public const USER_LOGIN_SUCCESS = 'user.login.success';
     public const USER_LOGIN_FAILED = 'user.login.failed';
 
-    public const USER_NOT_FOUND = 'user.not.found';
+    public const USER_NOT_FOUND = 'user.not_found';
 
     public const USER_VERIFY_ALREADY = 'user.verify.already';
     public const USER_VERIFY_SUCCESS = 'user.verify.success';
     public const USER_SESSION_NOT_FOUND = 'user.session.not_found';
 
     public const USER_RESET_PASSWORD_SUCCESS = 'user.reset_password.success';
+
+    public const USER_ACCOUNT_INACTIVE = 'user.account.inactive';
+
+    public const USER_DISABLE_SUCCESS = 'user.disable.success';
 
     /** 
      * Validation keys
@@ -40,4 +44,17 @@ final class UserTranslationKeys{
     public const USER_PASSWORD_NOT_MATCH = 'user.password.not_match';
 
     public const USER_PRIVACY_POLICY_NOT_ACCEPTED = 'user.privacy_policy.not_accepted';
+
+    /** 
+     * Forgot password keys
+     */
+    public const USER_FORGOT_PASSWORD_SUCCESS = 'user.forgot_password.success';
+
+    /**
+     * User email keys
+     */
+    public const USER_EMAIL_REGISTRATION_SUBJECT = 'email.registration.subject';
+    
+    public const USER_EMAIL_ACCOUNT_DISABLED_SUBJECT = 'email.account_disabled.subject';
+    public const USER_EMAIL_ACCOUNT_DELETED_SUBJECT = 'email.account_deleted.subject';
 }
