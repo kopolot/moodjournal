@@ -25,16 +25,6 @@ services:
 
     # add more service definitions when explicit configuration is needed
     # please note that last definitions always *replace* previous ones
-    App\EventListener\ExceptionListener:
-        tags:
-            - { name: kernel.event_listener, event: kernel.exception, method: onKernelException}
-        arguments:
-            $environment: "%kernel.environment%"
-
-    App\EventListener\UserEventsListener:
-        arguments:
-            $mailerFromAddress: '%mailer.from_address%'
-            $appUrl: '%app.url%'
 
     app.jwt_is_active_authenticator:
         class: App\Security\Authenticator\JWTIsActiveAuthenticator

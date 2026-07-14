@@ -31,3 +31,6 @@ xdebug
 /phpunit.xml
 .phpunit.result.cache
 ###< phpunit/phpunit ###
+
+latex
+html
