@@ -90,6 +90,26 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\Column(nullable: true)]
     private ?\DateTimeImmutable $disabledAt = null;
 
+    #[ORM\Column(options: ['default' => 0])]
+    #[Groups('user:read')]
+    private int $xpTotal = 0;
+
+    #[ORM\Column(options: ['default' => 0])]
+    #[Groups('user:read')]
+    private int $currentStreak = 0;
+
+    #[ORM\Column(options: ['default' => 0])]
+    #[Groups('user:read')]
+    private int $longestStreak = 0;
+
+    #[ORM\Column(type: Types::DATE_IMMUTABLE, nullable: true)]
+    #[Groups('user:read')]
+    private ?\DateTimeImmutable $lastMoodDate = null;
+
+    #[ORM\Column(length: 32, options: ['default' => 'free'])]
+    #[Groups('user:read')]
+    private string $subscriptionTier = 'free';
+
     public function getId(): ?Uuid
     {
         return $this->id;
@@ -263,6 +283,75 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
 
     public function setPreferences(array $preferences): static
     {
+        $this->preferences = $preferences;
+
+        return $this;
+    }
+
+    public function getXpTotal(): int
+    {
+        return $this->xpTotal;
+    }
+
+    public function setXpTotal(int $xpTotal): static
+    {
+        $this->xpTotal = max(0, $xpTotal);
+
+        return $this;
+    }
+
+    public function addXp(int $xp): static
+    {
+        $this->xpTotal += max(0, $xp);
+
+        return $this;
+    }
+
+    public function getCurrentStreak(): int
+    {
+        return $this->currentStreak;
+    }
+
+    public function setCurrentStreak(int $currentStreak): static
+    {
+        $this->currentStreak = max(0, $currentStreak);
+
+        return $this;
+    }
+
+    public function getLongestStreak(): int
+    {
+        return $this->longestStreak;
+    }
+
+    public function setLongestStreak(int $longestStreak): static
+    {
+        $this->longestStreak = max(0, $longestStreak);
+
+        return $this;
+    }
+
+    public function getLastMoodDate(): ?\DateTimeImmutable
+    {
+        return $this->lastMoodDate;
+    }
+
+    public function setLastMoodDate(?\DateTimeImmutable $lastMoodDate): static
+    {
+        $this->lastMoodDate = $lastMoodDate;
+
+        return $this;
+    }
+
+    public function getSubscriptionTier(): string
+    {
+        return $this->subscriptionTier;
+    }
+
+    public function setSubscriptionTier(string $subscriptionTier): static
+    {
+        $this->subscriptionTier = $subscriptionTier;
+
         return $this;
     }
 

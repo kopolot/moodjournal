@@ -1,3 +1,18 @@
+mood:
+  created: Check-in nastroju zapisany.
+  updated: Wpis nastroju zaktualizowany.
+  deleted: Wpis nastroju usunięty.
+  not_found: Nie znaleziono wpisu nastroju.
+  overall:
+    required: Ocena ogólna jest wymagana.
+  aspects:
+    required: Aspekty są wymagane.
+    invalid: Aspekty są nieprawidłowe.
+  score:
+    range: Ocena musi być w zakresie 1–6.
+  note:
+    length: Notatka jest zbyt długa.
+
 email:
   registration:
     subject: 'Witamy w naszym serwisie!'

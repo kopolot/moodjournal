@@ -40,9 +40,9 @@ class UserService
         // before registration event
 
         $user = new User();
-        $user->setFirstName($userDto->firstname);
-        $user->setEmail($userDto->email);
-        $user->setPassword($this->passwordHasher->hashPassword($user, $userDto->password));
+        $user->setFirstName((string) $userDto->firstname);
+        $user->setEmail((string) $userDto->email);
+        $user->setPassword($this->passwordHasher->hashPassword($user, (string) $userDto->password));
         $user->setRoles(['ROLE_USER']);
         $user->setIsVerified(false);
         $user->setIsActive(false);
@@ -137,10 +137,10 @@ class UserService
 
     public function editUser(User $user, UserDto $userDto): void
     {
-        if (isset($userDto->firstname)) {
+        if ($userDto->firstname !== null) {
             $user->setFirstName($userDto->firstname);
         }
-        if ($userDto?->preferences) {
+        if ($userDto->preferences !== null) {
             $user->setPreferences($userDto->preferences->__serialize());
         }
         $this->userRepository->save($user);
