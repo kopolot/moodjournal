@@ -79,7 +79,9 @@ final class UserControllerTest extends WebTestCase
         $this->assertEmailTextBodyContains($email, $verificationToken);
         
         $activationUrl = $router->generate('user.verify', ['token' => $verificationToken]);
-        $client->request('GET', $activationUrl);
+        $client->request('GET', $activationUrl, ['format' => 'json'], [], [
+            'HTTP_ACCEPT' => 'application/json',
+        ]);
         $this->assertResponseIsSuccessful();
         
         // $entityManager->clear();

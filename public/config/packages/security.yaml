@@ -48,6 +48,8 @@ security:
         - { path: ^/user/(login|register|checkloggedinuser|verify|resetpassword|forgotpassword), roles: PUBLIC_ACCESS }
         - { path: ^/user, roles: IS_AUTHENTICATED_FULLY }
         - { path: ^/mood, roles: IS_AUTHENTICATED_FULLY }
+        - { path: ^/subscription/plans, roles: PUBLIC_ACCESS }
+        - { path: ^/subscription, roles: IS_AUTHENTICATED_FULLY }
         - { path: ^/translations, roles: PUBLIC_ACCESS }
 
 when@test:

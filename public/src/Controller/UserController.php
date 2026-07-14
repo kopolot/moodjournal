@@ -10,7 +10,9 @@ use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Security\Http\Attribute\CurrentUser;
 use Symfony\Component\HttpKernel\Attribute\MapRequestPayload;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\HttpKernel\Exception\HttpExceptionInterface;
 use Symfony\Component\Serializer\Normalizer\NormalizerInterface;
 use Symfony\Component\Serializer\SerializerInterface;
 use App\Translation\UserTranslationKeys;
@@ -72,12 +74,31 @@ final class UserController extends AbstractController
     }
 
     #[Route('/verify/{token}', methods: ['GET'], name: 'user.verify')]
-    public function verify(string $token): ApiResponse
+    public function verify(Request $request, string $token): Response
     {
-        $this->userService->verifyUser($token);
-        return new ApiResponse(
-            UserTranslationKeys::USER_VERIFY_SUCCESS
-        );
+        $wantsJson = $request->query->get('format') === 'json'
+            || str_contains((string) $request->headers->get('Accept'), 'application/json');
+
+        try {
+            $this->userService->verifyUser($token);
+            if ($wantsJson) {
+                return new ApiResponse(UserTranslationKeys::USER_VERIFY_SUCCESS);
+            }
+
+            return $this->render('user/verify.html.twig', [
+                'success' => true,
+                'message' => null,
+            ]);
+        } catch (HttpExceptionInterface $e) {
+            if ($wantsJson) {
+                throw $e;
+            }
+
+            return $this->render('user/verify.html.twig', [
+                'success' => false,
+                'message' => $e->getMessage(),
+            ], new Response('', $e->getStatusCode()));
+        }
     }
 
     #[Route('/forgotpassword', methods: ['POST'], name: 'user.forgot_password')]

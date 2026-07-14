@@ -4,6 +4,16 @@
 # server:
 #   internal_error: App error has occured. Please contact administrator.
 
+subscription:
+  payment:
+    success: 'Payment successful. Welcome to MoodDic Plus/Pro!'
+    declined: 'Card was declined. Try another card (demo: avoid numbers ending in 0000).'
+  canceled: 'Subscription canceled. You are back on Free.'
+  tier:
+    invalid: Invalid subscription tier.
+  card:
+    invalid: Card number looks invalid.
+
 mood:
   created: Mood check-in saved.
   updated: Mood entry updated.
@@ -16,6 +26,8 @@ mood:
     invalid: Aspects are invalid.
   score:
     range: Mood score must be between 1 and 6.
+  aspect_note:
+    required: Each aspect needs a short note (at least 5 characters).
   note:
     length: Note is too long.
 

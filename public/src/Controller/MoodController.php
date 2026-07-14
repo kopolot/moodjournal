@@ -77,6 +77,18 @@ final class MoodController extends AbstractController
         );
     }
 
+    #[Route('/checkin-hints', name: 'mood.checkin_hints', methods: ['GET'])]
+    public function checkinHints(#[CurrentUser] User $user): ApiResponse
+    {
+        return new ApiResponse(
+            '',
+            true,
+            Response::HTTP_OK,
+            '',
+            $this->moodService->checkinHints($user)
+        );
+    }
+
     #[Route('/{id}', name: 'mood.get', methods: ['GET'], requirements: ['id' => '[0-9a-fA-F-]{36}'])]
     public function get(
         #[CurrentUser] User $user,
