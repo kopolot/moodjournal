@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% if success %}Konto aktywne — MoodDic{% else %}Weryfikacja — MoodDic{% endif %}</title>
+  <style>
+    :root {
+      --green: #58CC02;
+      --green-dark: #46A302;
+      --ink: #3C3C3C;
+      --mist: #F0F4F8;
+      --blue: #1CB0F6;
+      --red: #FF4B4B;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: "Nunito", "Segoe UI", system-ui, sans-serif;
+      background:
+        radial-gradient(circle at 10% 10%, #E5F8D0 0%, transparent 40%),
+        radial-gradient(circle at 90% 20%, #DDF4FF 0%, transparent 35%),
+        var(--mist);
+      color: var(--ink);
+      display: grid;
+      place-items: center;
+      padding: 24px;
+    }
+    .card {
+      width: min(440px, 100%);
+      background: #fff;
+      border: 2px solid #E5E5E5;
+      border-radius: 24px;
+      padding: 32px 28px;
+      text-align: center;
+      box-shadow: 0 12px 40px rgba(60,60,60,0.08);
+    }
+    .brand {
+      font-weight: 800;
+      font-size: 28px;
+      letter-spacing: -0.5px;
+      margin-bottom: 8px;
+    }
+    .brand span { color: var(--green); }
+    .emoji { font-size: 56px; margin: 12px 0; }
+    h1 {
+      font-size: 24px;
+      margin: 0 0 10px;
+      font-weight: 800;
+    }
+    p {
+      margin: 0 0 22px;
+      line-height: 1.5;
+      color: #666;
+      font-size: 16px;
+    }
+    .btn {
+      display: inline-block;
+      background: var(--green);
+      color: #fff;
+      text-decoration: none;
+      font-weight: 800;
+      padding: 14px 22px;
+      border-radius: 16px;
+      border-bottom: 4px solid var(--green-dark);
+    }
+    .btn:active { transform: translateY(2px); border-bottom-width: 2px; }
+    .muted {
+      margin-top: 18px;
+      font-size: 13px;
+      color: #999;
+    }
+    .error .btn {
+      background: var(--blue);
+      border-bottom-color: #1490C8;
+    }
+  </style>
+</head>
+<body>
+  <main class="card {% if not success %}error{% endif %}">
+    <div class="brand">Mood<span>Dic</span></div>
+    <div class="emoji">{{ success ? '🎉' : '😕' }}</div>
+    <h1>{{ success ? 'Email potwierdzony!' : 'Nie udało się zweryfikować' }}</h1>
+    <p>
+      {% if success %}
+        Twoje konto jest aktywne. Otwórz aplikację MoodDic i zaloguj się — czas zbierać XP za check-iny.
+      {% else %}
+        {{ message|default('Link weryfikacyjny jest nieprawidłowy albo został już użyty.') }}
+      {% endif %}
+    </p>
+    {% if success %}
+      <a class="btn" href="mooddic://login">Otwórz MoodDic</a>
+      <p class="muted">Jeśli przycisk nie działa, po prostu uruchom apkę i zaloguj się swoim emailem.</p>
+    {% else %}
+      <a class="btn" href="/">Wróć</a>
+    {% endif %}
+  </main>
+</body>
+</html>

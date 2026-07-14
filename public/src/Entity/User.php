@@ -110,6 +110,10 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[Groups('user:read')]
     private string $subscriptionTier = 'free';
 
+    #[ORM\Column(nullable: true)]
+    #[Groups('user:read')]
+    private ?\DateTimeImmutable $subscriptionExpiresAt = null;
+
     public function getId(): ?Uuid
     {
         return $this->id;
@@ -351,6 +355,18 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     public function setSubscriptionTier(string $subscriptionTier): static
     {
         $this->subscriptionTier = $subscriptionTier;
+
+        return $this;
+    }
+
+    public function getSubscriptionExpiresAt(): ?\DateTimeImmutable
+    {
+        return $this->subscriptionExpiresAt;
+    }
+
+    public function setSubscriptionExpiresAt(?\DateTimeImmutable $subscriptionExpiresAt): static
+    {
+        $this->subscriptionExpiresAt = $subscriptionExpiresAt;
 
         return $this;
     }

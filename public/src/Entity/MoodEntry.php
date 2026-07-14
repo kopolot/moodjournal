@@ -15,7 +15,23 @@ use Symfony\Component\Uid\Uuid;
 #[ORM\HasLifecycleCallbacks]
 class MoodEntry
 {
-    public const ASPECT_KEYS = ['mood', 'relationship', 'activity', 'environment'];
+    /**
+     * Life aspects rated in a check-in.
+     * Mental health is captured by overallMood (+ optional overall note), not as a separate key.
+     */
+    public const ASPECT_KEYS = [
+        'close_relationships',
+        'romantic_relationships',
+        'duties',
+        'physical_health',
+        'finances',
+        'relaxation',
+        'growth_spirituality',
+        'environment',
+    ];
+
+    public const ASPECT_NOTE_MIN_LENGTH = 5;
+    public const ASPECT_NOTE_MAX_LENGTH = 500;
 
     #[ORM\Id]
     #[ORM\Column(type: UuidType::NAME, unique: true)]

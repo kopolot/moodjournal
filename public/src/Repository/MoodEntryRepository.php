@@ -86,4 +86,21 @@ class MoodEntryRepository extends AbstractRepository
 
         return $result !== null ? round((float) $result, 2) : null;
     }
+
+    /**
+     * @return list<MoodEntry>
+     */
+    public function findBetween(User $user, \DateTimeImmutable $from, \DateTimeImmutable $to): array
+    {
+        return $this->createQueryBuilder('m')
+            ->andWhere('m.user = :user')
+            ->andWhere('m.createdAt >= :from')
+            ->andWhere('m.createdAt < :to')
+            ->setParameter('user', $user)
+            ->setParameter('from', $from)
+            ->setParameter('to', $to)
+            ->orderBy('m.createdAt', 'ASC')
+            ->getQuery()
+            ->getResult();
+    }
 }

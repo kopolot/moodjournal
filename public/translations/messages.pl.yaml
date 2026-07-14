@@ -1,3 +1,13 @@
+subscription:
+  payment:
+    success: 'Płatność przyjęta. Witaj w MoodDic Plus/Pro!'
+    declined: 'Karta odrzucona. Spróbuj innej (demo: unikaj numerów kończących się na 0000).'
+  canceled: 'Subskrypcja anulowana. Wracasz na Free.'
+  tier:
+    invalid: Nieprawidłowy poziom subskrypcji.
+  card:
+    invalid: Numer karty wygląda na nieprawidłowy.
+
 mood:
   created: Check-in nastroju zapisany.
   updated: Wpis nastroju zaktualizowany.
@@ -10,6 +20,8 @@ mood:
     invalid: Aspekty są nieprawidłowe.
   score:
     range: Ocena musi być w zakresie 1–6.
+  aspect_note:
+    required: Każdy aspekt potrzebuje krótkiego opisu (min. 5 znaków).
   note:
     length: Notatka jest zbyt długa.
 
