@@ -6,7 +6,8 @@ namespace App\Translation;
 /** 
  * This class contains all translation keys for the user.
  */
-final class UserTranslationKeys{
+final class UserTranslationKeys
+{
     /** 
      * User keys
      */
@@ -28,6 +29,9 @@ final class UserTranslationKeys{
 
     public const USER_DISABLE_SUCCESS = 'user.disable.success';
 
+    public const USER_EDIT_SUCCESS = 'user.edit.success';
+    public const USER_EDIT_LANGUAGE_ERROR = 'user.edit.language_error';
+
     /** 
      * Validation keys
      */
@@ -45,6 +49,8 @@ final class UserTranslationKeys{
 
     public const USER_PRIVACY_POLICY_NOT_ACCEPTED = 'user.privacy_policy.not_accepted';
 
+    public const USER_PREFERENCES_INVALID = 'user.preferences.invalid';
+
     /** 
      * Forgot password keys
      */
@@ -54,7 +60,7 @@ final class UserTranslationKeys{
      * User email keys
      */
     public const USER_EMAIL_REGISTRATION_SUBJECT = 'email.registration.subject';
-    
+
     public const USER_EMAIL_ACCOUNT_DISABLED_SUBJECT = 'email.account_disabled.subject';
     public const USER_EMAIL_ACCOUNT_DELETED_SUBJECT = 'email.account_deleted.subject';
 }

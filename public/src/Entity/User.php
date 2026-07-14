@@ -9,8 +9,20 @@ use App\Repository\UserRepository;
 use Symfony\Bridge\Doctrine\Types\UuidType;
 use Symfony\Component\Security\Core\User\UserInterface;
 use Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface;
-use Symfony\Component\Serializer\Annotation\Groups;
+use Symfony\Component\Serializer\Attribute\Groups;
+use Assert\Type;
 
+/**
+ * @class User
+ * @brief Represents a user in the system.
+ *
+ * This entity is used to manage user data, including roles, password,
+ * email, and other personal information. It implements the UserInterface
+ * and PasswordAuthenticatedUserInterface for Symfony's security system.
+ *
+ * @see UserInterface
+ * @see PasswordAuthenticatedUserInterface
+ */
 #[ORM\Entity(repositoryClass: UserRepository::class)]
 #[ORM\Table(name: '`user`')]
 #[ORM\Index(columns: ['email'], name: 'idx_user_email')]
@@ -18,7 +30,7 @@ use Symfony\Component\Serializer\Annotation\Groups;
 #[ORM\HasLifecycleCallbacks]
 class User implements UserInterface, PasswordAuthenticatedUserInterface
 {
-    
+
     #[ORM\Id]
     #[ORM\Column(type: UuidType::NAME, unique: true)]
     #[ORM\GeneratedValue(strategy: 'CUSTOM')]
@@ -71,22 +83,12 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[Groups('user:read')]
     private ?\DateTimeInterface $lastLogin = null;
 
-    #[ORM\Column(nullable: true)]
+    #[ORM\Column(nullable: true, type: 'json')]
     #[Groups('user:read')]
     private ?array $preferences = null;
 
     #[ORM\Column(nullable: true)]
     private ?\DateTimeImmutable $disabledAt = null;
-
-    // public function getId(): string
-    // {
-    //     return $this->id->toRfc4122();
-    // }
-
-    // public function getUuid(): ?Uuid
-    // {
-    //     return $this->id;
-    // }
 
     public function getId(): ?Uuid
     {
@@ -145,6 +147,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     /**
      * @see UserInterface
      */
+    #[\Deprecated]
     public function eraseCredentials(): void
     {
         // If you store any temporary, sensitive data on the user, clear it here
@@ -207,10 +210,9 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
 
     public function setIsActive(bool $isActive): static
     {
-        if( $this->isActive() && !$isActive )
-        {
+        if ($this->isActive() && !$isActive) {
             $this->disabledAt = new \DateTimeImmutable;
-        } else if ( !$this->isActive() && $isActive ) {
+        } else if (!$this->isActive() && $isActive) {
             $this->disabledAt = null;
         }
         $this->isActive = $isActive;
@@ -259,10 +261,8 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
         return $this->preferences;
     }
 
-    public function setPreferences(?array $preferences): static
+    public function setPreferences(array $preferences): static
     {
-        $this->preferences = $preferences;
-
         return $this;
     }
 

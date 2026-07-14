@@ -3,7 +3,6 @@
 namespace App\Scheduler\Message\Provider;
 
 use App\Repository\UserRepository;
-use Symfony\Component\Messenger\Attribute\AsMessage;
 use Symfony\Component\Messenger\Message\RedispatchMessage;
 use Symfony\Component\Scheduler\Generator\MessageContext;
 
