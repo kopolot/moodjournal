@@ -9,6 +9,8 @@ use App\Enum\SubscriptionTier;
 use App\Repository\MoodEntryRepository;
 use App\Repository\UserRepository;
 use App\Translation\MoodTranslationKeys;
+use Doctrine\DBAL\LockMode;
+use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Symfony\Component\HttpKernel\Exception\UnprocessableEntityHttpException;
 use Symfony\Contracts\Cache\CacheInterface;
@@ -34,38 +36,51 @@ class MoodService
         private MoodEntryRepository $moodEntryRepository,
         private UserRepository $userRepository,
         private CacheInterface $moodCache,
+        private EntityManagerInterface $em,
     ) {
     }
 
     public function create(User $user, MoodEntryDto $dto): MoodEntry
     {
+        // Validation / hints outside the lock — only user XP/streak + insert need serialization.
         $hints = $this->checkinHints($user);
         $aspects = $this->normalizeAspects($dto->aspects ?? [], $hints);
-        $today = new \DateTimeImmutable('today');
-        $isFirstToday = !$this->moodEntryRepository->hasEntryOnDate($user, $today);
-
         $overallMood = (int) $dto->overallMood;
         $overallNote = $this->normalizeNote($dto->note);
         if ($this->isOverallNoteRequired($overallMood, $hints)) {
             $this->assertNoteLength($overallNote);
         }
 
-        $entry = new MoodEntry();
-        $entry->setUser($user);
-        $entry->setOverallMood($overallMood);
-        $entry->setAspects($aspects);
-        $entry->setNote($overallNote);
+        $entry = $this->em->wrapInTransaction(function () use ($user, $aspects, $overallMood, $overallNote): MoodEntry {
+            /** @var User|null $locked */
+            $locked = $this->em->find(User::class, $user->getId(), LockMode::PESSIMISTIC_WRITE);
+            if (!$locked) {
+                throw new NotFoundHttpException(MoodTranslationKeys::MOOD_NOT_FOUND);
+            }
 
-        $xp = $this->calculateXp($entry, $isFirstToday, $user->getCurrentStreak());
-        $entry->setXpEarned($xp);
+            $today = new \DateTimeImmutable('today');
+            $isFirstToday = !$this->moodEntryRepository->hasEntryOnDate($locked, $today);
 
-        if ($isFirstToday) {
-            $this->applyStreak($user, $today);
-        }
+            $entry = new MoodEntry();
+            $entry->setUser($locked);
+            $entry->setOverallMood($overallMood);
+            $entry->setAspects($aspects);
+            $entry->setNote($overallNote);
 
-        $user->addXp($xp);
-        $this->moodEntryRepository->save($entry);
-        $this->userRepository->save($user);
+            $xp = $this->calculateXp($entry, $isFirstToday, $locked->getCurrentStreak());
+            $entry->setXpEarned($xp);
+
+            if ($isFirstToday) {
+                $this->applyStreak($locked, $today);
+            }
+
+            $locked->addXp($xp);
+            $this->em->persist($entry);
+            $this->em->flush();
+
+            return $entry;
+        });
+
         $this->invalidateHintsCache($user);
 
         return $entry;

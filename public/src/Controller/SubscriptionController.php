@@ -6,8 +6,10 @@ use App\Dto\SubscriptionCheckoutDto;
 use App\Entity\User;
 use App\Enum\SubscriptionTier;
 use App\Response\ApiResponse;
+use App\Service\IdempotencyService;
 use App\Service\SubscriptionService;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\Attribute\MapRequestPayload;
 use Symfony\Component\Routing\Attribute\Route;
@@ -18,6 +20,7 @@ final class SubscriptionController extends AbstractController
 {
     public function __construct(
         private SubscriptionService $subscriptionService,
+        private IdempotencyService $idempotencyService,
     ) {
     }
 
@@ -37,17 +40,35 @@ final class SubscriptionController extends AbstractController
 
     #[Route('/checkout', name: 'subscription.checkout', methods: ['POST'])]
     public function checkout(
+        Request $request,
         #[CurrentUser] User $user,
         #[MapRequestPayload] SubscriptionCheckoutDto $dto,
     ): ApiResponse {
-        $result = $this->subscriptionService->checkout($user, $dto);
+        $userId = $user->getId()?->toRfc4122() ?? '';
+
+        /** @var array{statusCode: int, message: string, data: array<string, mixed>} $payload */
+        $payload = $this->idempotencyService->run(
+            'subscription.checkout',
+            $request->headers->get('Idempotency-Key'),
+            $userId,
+            hash('xxh128', $request->getContent()),
+            function () use ($user, $dto): array {
+                $result = $this->subscriptionService->checkout($user, $dto);
+
+                return [
+                    'statusCode' => Response::HTTP_OK,
+                    'message' => 'subscription.payment.success',
+                    'data' => $result,
+                ];
+            }
+        );
 
         return new ApiResponse(
-            'subscription.payment.success',
+            $payload['message'],
             true,
-            Response::HTTP_OK,
+            $payload['statusCode'],
             '',
-            $result
+            $payload['data']
         );
     }
 

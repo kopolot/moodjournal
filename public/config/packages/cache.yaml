@@ -7,10 +7,15 @@ framework:
             cache.mood:
                 adapter: cache.adapter.redis
                 default_lifetime: 900
+            cache.idempotency:
+                adapter: cache.adapter.redis
+                default_lifetime: 86400
 
 when@test:
     framework:
         cache:
             pools:
                 cache.mood:
+                    adapter: cache.adapter.array
+                cache.idempotency:
                     adapter: cache.adapter.array
