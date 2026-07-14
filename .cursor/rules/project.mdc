@@ -1,0 +1,14 @@
+---
+description: MoodJournal API — project status and invariants
+alwaysApply: true
+---
+
+# MoodJournal API
+
+Abandoned portfolio example (Symfony 8.1 JSON API + Docker). Companion app: `moodjournalmobile` on GitHub.
+
+- Prefer minimal, truthful fixes; do not invent a full product.
+- Stack runs via Docker Compose; only publish Apache on host port **8080**.
+- Symfony root is `public/`; HTTP docroot is `public/public/`.
+- Nested `mobile/` is a separate git repo — do not commit it here.
+- No project-scoped MCP is required for this codebase.

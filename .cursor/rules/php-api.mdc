@@ -1,0 +1,15 @@
+---
+description: Symfony 8 API conventions for public/
+globs: public/**/*.{php,yaml,yml,env*}
+alwaysApply: false
+---
+
+# PHP / Symfony API
+
+- PHP ≥ 8.5, Symfony 8.1 packages.
+- Serializer groups: `Symfony\Component\Serializer\Attribute\Groups`.
+- Login body: `{ "email", "password" }` → JWT in `data.jwt_token`.
+- Register body: `firstname`, `email`, `password`, `repeatPassword`, `acceptPrivacyPolicy`.
+- Keep Nelmio CORS; do not restore broken `.htaccess` OPTIONS redirects.
+- Avoid obsolete Doctrine config keys removed for SF8/DBAL4.
+- Run tests with `php bin/phpunit` inside `mood_dic-php-1`.

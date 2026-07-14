@@ -1,90 +1,103 @@
-# MoodJournal
+# MoodJournal (API + Docker)
 
 > **Status: abandoned example / portfolio snippet**  
 > Early prototype of a mood-tracking app. Development stopped; the idea was dropped.  
-> Kept as a learning/reference project — not production-ready and not maintained.
+> Kept as a learning/reference project — **not production-ready** and **not maintained**.
 
-Cross-platform journal app idea: log how you feel, browse related content, keep a simple profile. What landed in the repo is mainly **auth scaffolding** plus an incomplete mood UI on mobile.
+Companion mobile app: [moodjournalmobile](https://github.com/kopolot/moodjournalmobile)
 
-## Structure
+This repository holds the **Symfony JSON API** and the **local Docker stack**. What exists is mainly **auth scaffolding** (register / verify / JWT / profile). There is no mood/journal domain on the API.
+
+## Stack
+
+| Piece | Version / notes |
+|-------|-----------------|
+| PHP | 8.5 (Docker `php:8.5-fpm`) |
+| Symfony | 8.1 |
+| DB | PostgreSQL 15 |
+| Auth | Lexik JWT |
+| Async | Messenger + RabbitMQ, Scheduler |
+| Mail (dev) | Mailhog (proxied via Apache) |
+| CORS | Nelmio (localhost + private LAN) |
+
+## Layout
 
 | Path | Role |
 |------|------|
-| `public/` | Backend — Symfony 7 JSON API (JWT auth, user account) |
-| `mobile/` | Frontend — Expo / React Native (Expo Router) |
-| `docker/` + `docker-compose.yaml` | Local stack: PHP-FPM, Apache, PostgreSQL, Mailhog, Adminer, RabbitMQ |
+| `public/` | Symfony project root (HTTP docroot is `public/public/`) |
+| `docker/` | PHP, Apache, RabbitMQ config |
+| `docker-compose.yaml` | Standalone local stack |
 
-The folder name `public/` is the Symfony project root (docroot is `public/public/`).
+A local `mobile/` checkout may exist beside this repo; it is **gitignored** here and lives in its own GitHub repository.
 
-## What works
-
-**Backend (`public/`)**
-- User register / login (Lexik JWT)
-- Email verification flow
-- Profile get / edit (preferences intended)
-- Disable account + scheduled hard-delete of inactive users
-- Locale catalogs (`/translations/{locale}`)
-
-**Mobile (`mobile/`)**
-- Register / login / logout, session restore
-- Offline gate on auth screens
-- Tab shell: home, explore, profile, mood-note form (UI only)
-- i18n hooks (EN/PL, incomplete strings)
-
-## What’s missing / incomplete
-
-- No mood/journal domain on the API — mobile mood form does not persist anywhere
-- Explore and much of profile are placeholders
-- Password reset and some account helpers are unfinished on the backend
-- Mobile still references a few auth endpoints that don’t match the API (`/auth/*` vs `/user/*`)
-- Stage/prod API hosts in config are placeholders
-
-Treat this as a **partial auth + UI sketch**, not a finished product.
-
-## Stack (summary)
-
-- **API:** PHP 8.5+, Symfony 8.1, Doctrine, PostgreSQL, Lexik JWT, Messenger/Scheduler, Mailer
-- **App:** Expo ~57, React Native, Expo Router, Axios, AsyncStorage, i18next
-- **Local:** standalone Docker Compose (no shared nginx reverse proxy); PHP image is 8.5-fpm
-
-## Local run (rough outline)
-
-Backend (from repo root):
+## Quick start
 
 ```bash
 UID=$(id -u) docker compose up -d --build
-# then inside the PHP project: composer install, migrate, JWT keys, etc.
+
+# inside PHP container (or with composer on host pointed at public/)
+docker exec -it mood_dic-php-1 bash
+# cd /var/www/html
+composer install
+php bin/console doctrine:migrations:migrate --no-interaction
+# ensure JWT keys exist under config/jwt/
+```
+
+Copy env examples if needed:
+
+```bash
+cp public/.env.example public/.env
+# local Docker overrides (DB, mailhog, rabbit) — see public/.env.*.local.example
 ```
 
 | Service | URL |
 |---------|-----|
 | API / Apache | http://localhost:8080 |
-| Mailhog | http://localhost:8080/mailhog/ |
+| Mailhog UI | http://localhost:8080/mailhog/ |
 | Adminer | http://localhost:8080/adminer/ |
 | RabbitMQ UI | http://localhost:8080/rabbitmq/ |
 
-Only Apache is published on the host (`8080`). Mailhog, Adminer and RabbitMQ stay on the internal Docker network and are proxied by Apache.
+Only **Apache `:8080`** is published on the host. Mailhog, Adminer and RabbitMQ stay on the Docker network and are reverse-proxied by Apache.
 
-Mobile:
+Default Postgres (compose): user `symfony`, password `password`, DB `symfony`, host `db`.
+
+## API surface (what exists)
+
+Base URL (dev): `http://localhost:8080`
+
+| Method | Path | Notes |
+|--------|------|--------|
+| `POST` | `/user/register` | `firstname`, `email`, `password`, `repeatPassword`, `acceptPrivacyPolicy` |
+| `POST` | `/user/login` | JSON body uses **`email`** + `password`; response JWT in `data.jwt_token` |
+| `GET` | `/user/verify/{token}` | Email verification |
+| `GET` | `/user/get` | Bearer JWT; profile (`user:read` serializer groups) |
+| `PATCH` | `/user/edit` | Profile / preferences |
+| `POST` | `/user/disableuser` | Soft-disable; scheduler may hard-delete later |
+| `POST` | `/user/forgotpassword` | Incomplete |
+| `POST` | `/user/resetpassword` | Incomplete |
+| `GET` | `/translations/{locale}` | Locale catalog (known bugs possible) |
+
+CORS allows browser origins on localhost and private LAN IPs so Expo web / LAN devices can call the API.
+
+## Tests
 
 ```bash
-cd mobile
-npm install
-npx expo start
+docker exec mood_dic-php-1 php bin/phpunit
 ```
 
-Dev API base URL is resolved automatically in `mobile/config/appConfig.ts`:
-- Metro/Expo host (LAN IP) on a physical device
-- `10.0.2.2:8080` on Android emulator
-- `localhost:8080` on iOS simulator / web
+## Known gaps
 
-| Issue | Fix |
-|------|-----|
-| Web login: blocked OPTIONS / no error | CORS via Nelmio; `Alert.alert` replaced with `showAlert` (works on web) |
-| Phone QR not opening | Use same Wi‑Fi, Expo Go app, `npm start` (`expo start --lan`). Avoid tunnel unless logged into Expo (`npm run start:tunnel`). |
+- No mood/journal endpoints
+- Password reset unfinished
+- Translations endpoint may fail on bad YAML flatten
+- `CustomJsonLoginAuthenticator` extends a `final` Symfony class (deprecation)
+
+## Agent / Cursor notes
+
+See [`AGENTS.md`](./AGENTS.md) and [`.cursor/rules/`](./.cursor/rules/).
 
 ## Why this exists
 
-Old personal product idea that never shipped. Shared as an **example** of early fullstack wiring (Symfony JWT API + Expo client), not as something to deploy.
+Personal product idea that never shipped. Shared as an **example** of early fullstack wiring (Symfony JWT API + Expo client), not something to deploy.
 
 No support, no roadmap, no guarantees.
