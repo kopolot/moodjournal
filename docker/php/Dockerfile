@@ -1,4 +1,4 @@
-FROM php:8.3-fpm
+FROM php:8.5-fpm
 ARG UID
 
 RUN apt update
@@ -14,7 +14,8 @@ RUN apt-get install -y \
     nano \
     postgresql-common \
     postgresql-client \
-    librabbitmq-dev
+    librabbitmq-dev \ 
+    cron
 RUN docker-php-ext-install \
     pdo_pgsql \
     pgsql \

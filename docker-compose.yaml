@@ -3,8 +3,8 @@ services:
     build:
       context: .
       dockerfile: docker/php/Dockerfile
-      args: 
-        UID: ${UID}
+      args:
+        UID: ${UID:-1000}
     volumes:
       - ./public:/var/www/html
     networks:
@@ -15,15 +15,19 @@ services:
 
   apache:
     image: httpd:2.4
+    ports:
+      - "8080:8080"
     volumes:
       - ./public:/var/www/html
       - ./docker/apache/httpd.conf:/usr/local/apache2/conf/httpd.conf
     networks:
       - app_network
-      - nginx-apache-reverse
     depends_on:
       - php
-    hostname: local.moodjournal.com
+      - mailhog
+      - adminer
+      - rabbitmq
+    hostname: apache
 
   postgres:
     image: postgres:15
@@ -63,8 +67,6 @@ services:
     environment:
       RABBITMQ_DEFAULT_USER: user
       RABBITMQ_DEFAULT_PASS: password
-      #NIE DZIA;A
-      # RABBITMQ_SERVER_ADDITIONAL_ERL_ARGS: "-rabbit 'management.path_prefix' '/rabbitmq'"
 
 networks:
   app_network:
@@ -73,8 +75,6 @@ networks:
         - subnet: 172.255.0.0/24
           ip_range: 172.255.0.0/24
           gateway: 172.255.0.1
-  nginx-apache-reverse:
-    external: true
 
 volumes:
   postgres_data:
