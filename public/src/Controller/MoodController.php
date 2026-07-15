@@ -5,6 +5,7 @@ namespace App\Controller;
 use App\Dto\MoodEntryDto;
 use App\Entity\User;
 use App\Response\ApiResponse;
+use App\Service\IdempotencyService;
 use App\Service\MoodService;
 use App\Translation\MoodTranslationKeys;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -21,26 +22,45 @@ final class MoodController extends AbstractController
 {
     public function __construct(
         private MoodService $moodService,
+        private IdempotencyService $idempotencyService,
         private SerializerInterface&NormalizerInterface $serializer,
     ) {
     }
 
     #[Route('', name: 'mood.create', methods: ['POST'])]
     public function create(
+        Request $request,
         #[CurrentUser] User $user,
         #[MapRequestPayload(validationGroups: ['create'])] MoodEntryDto $dto,
     ): ApiResponse {
-        $entry = $this->moodService->create($user, $dto);
+        $userId = $user->getId()?->toRfc4122() ?? '';
+
+        /** @var array{statusCode: int, message: string, data: array<string, mixed>} $payload */
+        $payload = $this->idempotencyService->run(
+            'mood.create',
+            $request->headers->get('Idempotency-Key'),
+            $userId,
+            hash('xxh128', $request->getContent()),
+            function () use ($user, $dto): array {
+                $entry = $this->moodService->create($user, $dto);
+
+                return [
+                    'statusCode' => Response::HTTP_CREATED,
+                    'message' => MoodTranslationKeys::MOOD_CREATED,
+                    'data' => [
+                        'entry' => $this->normalizeEntry($entry),
+                        'stats' => $this->moodService->stats($user),
+                    ],
+                ];
+            }
+        );
 
         return new ApiResponse(
-            MoodTranslationKeys::MOOD_CREATED,
+            $payload['message'],
             true,
-            Response::HTTP_CREATED,
+            $payload['statusCode'],
             '',
-            [
-                'entry' => $this->normalizeEntry($entry),
-                'stats' => $this->moodService->stats($user),
-            ]
+            $payload['data']
         );
     }
 

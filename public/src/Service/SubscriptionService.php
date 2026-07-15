@@ -6,13 +6,17 @@ use App\Dto\SubscriptionCheckoutDto;
 use App\Entity\User;
 use App\Enum\SubscriptionTier;
 use App\Repository\UserRepository;
+use Doctrine\DBAL\LockMode;
+use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
+use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Symfony\Component\HttpKernel\Exception\UnprocessableEntityHttpException;
 
 class SubscriptionService
 {
     public function __construct(
         private UserRepository $userRepository,
+        private EntityManagerInterface $em,
     ) {
     }
 
@@ -37,24 +41,32 @@ class SubscriptionService
             throw new UnprocessableEntityHttpException('subscription.payment.declined');
         }
 
-        $expiresAt = (new \DateTimeImmutable('now'))->modify('+30 days');
-        $user->setSubscriptionTier($tier->value);
-        $user->setSubscriptionExpiresAt($expiresAt);
-        $this->userRepository->save($user);
+        return $this->em->wrapInTransaction(function () use ($user, $tier, $digits, $dto): array {
+            /** @var User|null $locked */
+            $locked = $this->em->find(User::class, $user->getId(), LockMode::PESSIMISTIC_WRITE);
+            if (!$locked) {
+                throw new NotFoundHttpException('user.not_found');
+            }
 
-        return [
-            'paymentId' => 'pay_demo_' . bin2hex(random_bytes(8)),
-            'status' => 'succeeded',
-            'tier' => $tier->value,
-            'expiresAt' => $expiresAt->format(DATE_ATOM),
-            'aiAnalysisUnlocked' => $tier->unlocksAi(),
-            'receipt' => [
-                'amount' => $this->priceFor($tier),
-                'currency' => 'PLN',
-                'maskedCard' => '**** **** **** ' . substr($digits, -4),
-                'cardholderName' => $dto->cardholderName,
-            ],
-        ];
+            $expiresAt = (new \DateTimeImmutable('now'))->modify('+30 days');
+            $locked->setSubscriptionTier($tier->value);
+            $locked->setSubscriptionExpiresAt($expiresAt);
+            $this->em->flush();
+
+            return [
+                'paymentId' => 'pay_demo_' . bin2hex(random_bytes(8)),
+                'status' => 'succeeded',
+                'tier' => $tier->value,
+                'expiresAt' => $expiresAt->format(DATE_ATOM),
+                'aiAnalysisUnlocked' => $tier->unlocksAi(),
+                'receipt' => [
+                    'amount' => $this->priceFor($tier),
+                    'currency' => 'PLN',
+                    'maskedCard' => '**** **** **** ' . substr($digits, -4),
+                    'cardholderName' => $dto->cardholderName,
+                ],
+            ];
+        });
     }
 
     /**
@@ -74,11 +86,19 @@ class SubscriptionService
 
     public function cancel(User $user): array
     {
-        $user->setSubscriptionTier(SubscriptionTier::Free->value);
-        $user->setSubscriptionExpiresAt(null);
-        $this->userRepository->save($user);
+        return $this->em->wrapInTransaction(function () use ($user): array {
+            /** @var User|null $locked */
+            $locked = $this->em->find(User::class, $user->getId(), LockMode::PESSIMISTIC_WRITE);
+            if (!$locked) {
+                throw new NotFoundHttpException('user.not_found');
+            }
 
-        return $this->current($user);
+            $locked->setSubscriptionTier(SubscriptionTier::Free->value);
+            $locked->setSubscriptionExpiresAt(null);
+            $this->em->flush();
+
+            return $this->current($locked);
+        });
     }
 
     private function priceFor(SubscriptionTier $tier): float

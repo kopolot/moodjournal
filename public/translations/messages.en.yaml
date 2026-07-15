@@ -14,6 +14,13 @@ subscription:
   card:
     invalid: Card number looks invalid.
 
+idempotency:
+  key:
+    invalid: Idempotency-Key must be 8–128 characters (letters, digits, . _ -).
+    conflict: Idempotency-Key was reused with a different request body.
+  lock:
+    timeout: Another request with this Idempotency-Key is still processing. Retry shortly.
+
 mood:
   created: Mood check-in saved.
   updated: Mood entry updated.

@@ -8,6 +8,13 @@ subscription:
   card:
     invalid: Numer karty wygląda na nieprawidłowy.
 
+idempotency:
+  key:
+    invalid: Idempotency-Key musi mieć 8–128 znaków (litery, cyfry, . _ -).
+    conflict: Idempotency-Key użyty ponownie z inną treścią żądania.
+  lock:
+    timeout: Inne żądanie z tym Idempotency-Key nadal trwa. Spróbuj za chwilę.
+
 mood:
   created: Check-in nastroju zapisany.
   updated: Wpis nastroju zaktualizowany.
