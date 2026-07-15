@@ -32,9 +32,25 @@ mood:
   note:
     length: Notatka jest zbyt długa.
 
+user:
+  forgot_password:
+    success: 'Jeśli ten e-mail jest w bazie, wysłaliśmy link do resetu.'
+  reset_password:
+    success: 'Hasło zmienione. Możesz się zalogować.'
+    token_invalid: 'Link resetu jest nieprawidłowy albo wygasł.'
+  change_password:
+    success: 'Hasło zaktualizowane.'
+    current_invalid: 'Obecne hasło jest nieprawidłowe.'
+
 email:
   registration:
     subject: 'Witamy w naszym serwisie!'
     thank_you: 'Dziękujemy za rejestrację w naszym serwisie. Prosimy o potwierdzenie swojego adresu e-mail klikając w poniższy link:'
     confirm_button: 'Potwierdź adres e-mail'
     verification_link: 'Link do weryfikacji'
+  forget_password:
+    subject: 'Reset hasła MoodDic'
+    greeting: 'Cześć %name%'
+    message: 'Kliknij w link poniżej, żeby ustawić nowe hasło. Jeśli nie prosiłeś o reset, zignoruj tę wiadomość.'
+    reset_button: 'Zresetuj hasło'
+  signature: 'Pozdrawiamy, zespół MoodDic'

@@ -24,8 +24,13 @@ final class UserTranslationKeys
     public const USER_SESSION_NOT_FOUND = 'user.session.not_found';
 
     public const USER_RESET_PASSWORD_SUCCESS = 'user.reset_password.success';
+    public const USER_RESET_TOKEN_INVALID = 'user.reset_password.token_invalid';
+    public const USER_CHANGE_PASSWORD_SUCCESS = 'user.change_password.success';
+    public const USER_CURRENT_PASSWORD_INVALID = 'user.change_password.current_invalid';
 
     public const USER_ACCOUNT_INACTIVE = 'user.account.inactive';
+
+    public const USER_EMAIL_FORGOT_PASSWORD_SUBJECT = 'email.forget_password.subject';
 
     public const USER_DISABLE_SUCCESS = 'user.disable.success';
 
