@@ -46,6 +46,7 @@ security:
     # Note: Only the *first* access control that matches will be used
     access_control:
         - { path: ^/user/(login|register|checkloggedinuser|verify|resetpassword|forgotpassword), roles: PUBLIC_ACCESS }
+        # HTML + API reset stay public; changepassword is authenticated under ^/user
         - { path: ^/user, roles: IS_AUTHENTICATED_FULLY }
         - { path: ^/mood, roles: IS_AUTHENTICATED_FULLY }
         - { path: ^/subscription/plans, roles: PUBLIC_ACCESS }
