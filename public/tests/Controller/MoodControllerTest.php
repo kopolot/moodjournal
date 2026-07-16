@@ -230,6 +230,61 @@ final class MoodControllerTest extends WebTestCase
         $this->assertArrayHasKey('aspectInsights', $data['data']);
     }
 
+    public function testAdvancedReportsRequirePro(): void
+    {
+        $client = static::createClient();
+        $token = $this->createAuthenticatedUserAndLogin($client, 'mood-reports-locked');
+
+        $client->setServerParameter('HTTP_AUTHORIZATION', 'Bearer ' . $token);
+        $client->request('GET', '/mood/reports/advanced');
+        $this->assertResponseStatusCodeSame(Response::HTTP_FORBIDDEN);
+    }
+
+    public function testAdvancedReportsReturnSeriesForProUser(): void
+    {
+        $client = static::createClient();
+        $email = sprintf('mood-reports.%s@example.com', uniqid());
+        $password = 'Test1234!';
+        $this->createUser($email, $password, subscriptionTier: 'pro');
+
+        $client->request(
+            'POST',
+            '/user/login',
+            [],
+            [],
+            ['CONTENT_TYPE' => 'application/json'],
+            json_encode(['email' => $email, 'password' => $password])
+        );
+        $loginData = json_decode($client->getResponse()->getContent(), true);
+        $client->setServerParameter('HTTP_AUTHORIZATION', 'Bearer ' . $loginData['data']['jwt_token']);
+
+        $client->request(
+            'POST',
+            '/mood',
+            [],
+            [],
+            ['CONTENT_TYPE' => 'application/json'],
+            json_encode([
+                'overallMood' => 5,
+                'note' => 'Report sample overall note.',
+                'aspects' => $this->buildAspectPayload(score: 5),
+            ])
+        );
+        $this->assertResponseStatusCodeSame(Response::HTTP_CREATED);
+
+        $client->request('GET', '/mood/reports/advanced?days=30');
+        $this->assertResponseStatusCodeSame(Response::HTTP_OK);
+        $data = json_decode($client->getResponse()->getContent(), true);
+
+        $this->assertTrue($data['success']);
+        $this->assertTrue($data['data']['unlocked']);
+        $this->assertSame(30, $data['data']['rangeDays']);
+        $this->assertSame(1, $data['data']['entryCount']);
+        $this->assertNotEmpty($data['data']['weeklySeries']);
+        $this->assertCount(6, $data['data']['moodDistribution']);
+        $this->assertNotEmpty($data['data']['aspectAverages']);
+    }
+
     /**
      * @return array<string, array{score: int, note: string}>
      */

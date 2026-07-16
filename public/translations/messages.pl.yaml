@@ -24,6 +24,7 @@ mood:
     locked: Analiza AI nastroju wymaga MoodDic Plus lub Pro.
   reports:
     locked: Zaawansowane raporty wymagają MoodDic Pro.
+    range_invalid: Zakres raportu musi mieć 30 albo 90 dni.
   overall:
     required: Ocena ogólna jest wymagana.
   aspects:

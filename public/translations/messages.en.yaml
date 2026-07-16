@@ -30,6 +30,7 @@ mood:
     locked: AI mood analysis requires MoodDic Plus or Pro.
   reports:
     locked: Advanced reports require MoodDic Pro.
+    range_invalid: Report range must be 30 or 90 days.
   overall:
     required: Overall mood is required.
   aspects:
