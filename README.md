@@ -142,19 +142,44 @@ When the LLM call succeeds, the response includes:
 
 On timeout/error the pattern payload is returned unchanged (`engine: "pattern"`).
 
-### Local model (Ollama) — GPU required for comfort
+### Local model (Ollama) — optional Compose profile + strong GPU
 
-Local inference is **optional** and meant for developers with a strong GPU.  
-Laptops without a discrete GPU can still use MoodDic — just leave `OPENAI_*` empty.
+Local inference is **optional**. Without a discrete GPU, leave `OPENAI_*` empty and use the pattern engine.
 
-Example (AMD Radeon with ~12 GB VRAM, e.g. RX 6700 XT):
+#### Docker Compose (recommended for this repo)
+
+Ollama is **not** part of the default stack. Start it with the `llm` profile:
 
 ```bash
-# install Ollama, then pull a 7B–8B instruct model
-ollama pull llama3.1:8b
-# or: ollama pull qwen2.5:7b
+# pulls llama3.1:8b on first run (override with OLLAMA_MODEL=…)
+UID=$(id -u) docker compose --profile llm up -d
 
-# in public/.env (API container must reach the host)
+# enable API → Ollama (copy from .env.dev.local.example)
+# public/.env.dev.local:
+OPENAI_BASE_URL=http://ollama:11434/v1
+OPENAI_API_KEY=ollama
+OPENAI_MODEL=llama3.1:8b
+```
+
+Services:
+
+| Service | Role |
+|---------|------|
+| `ollama` | OpenAI-compatible server on the Docker network (`http://ollama:11434`) |
+| `ollama-init` | One-shot pull of `${OLLAMA_MODEL:-llama3.1:8b}` |
+
+GPU notes:
+
+- Compose mounts `/dev/dri` for AMD/Intel GPUs (e.g. **RX 6700 XT / 12 GB**).
+- **You need a strong GPU** for a usable demo (≥ **8 GB** VRAM; **12 GB** comfortable for 7B–8B).
+- CPU-only inside the container is possible but **slow** — fine for a smoke test, not for UX.
+- First `ollama pull` downloads several GB; keep `ollama_data` volume.
+
+#### Host Ollama (alternative)
+
+```bash
+ollama pull llama3.1:8b
+# public/.env — API container → host gateway
 OPENAI_BASE_URL=http://172.255.0.1:11434/v1
 OPENAI_API_KEY=ollama
 OPENAI_MODEL=llama3.1:8b
@@ -165,10 +190,10 @@ OPENAI_MODEL=llama3.1:8b
 | GPU VRAM | **≥ 8 GB** recommended for 7B Q4/Q5; **12 GB** comfortable (RX 6700 XT class) |
 | CPU-only | possible but slow — not recommended for interactive demo |
 | Model size | Prefer **7B–8B instruct**; 13B OK on 12 GB; 30B+ usually too heavy |
-| Backend | Ollama or llama.cpp with OpenAI-compatible `/v1` |
+| Backend | Compose `ollama` profile, host Ollama, or any OpenAI-compatible `/v1` |
 | Privacy | Mood aggregates are sent to the configured endpoint — keep it local if that matters |
 
-> **Portfolio default:** keep LLM disabled. Pattern analysis is enough to demo Plus/Pro unlocks without hardware or paid keys.
+> **Portfolio default:** do **not** enable `--profile llm`. Pattern analysis demos Plus/Pro without hardware or paid keys.
 
 ## Tests
 

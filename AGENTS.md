@@ -23,6 +23,10 @@ Start stack:
 
 ```bash
 UID=$(id -u) docker compose up -d --build
+
+# optional local LLM (Ollama + model pull; needs strong GPU):
+UID=$(id -u) docker compose --profile llm up -d
+# then set OPENAI_* in public/.env.dev.local → http://ollama:11434/v1
 ```
 
 Console / tests / migrate:
