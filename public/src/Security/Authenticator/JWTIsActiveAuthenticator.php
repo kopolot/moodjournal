@@ -2,7 +2,7 @@
 
 namespace App\Security\Authenticator;
 
-use App\Security\Authenticator\Passport\Credentials\IsActiveCreditnal;
+use App\Security\Authenticator\Passport\Credentials\IsActiveCredential;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Contracts\Translation\TranslatorInterface;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
@@ -74,7 +74,7 @@ class JWTIsActiveAuthenticator extends BaseJWTAuthenticator
                 (string) $payload[$idClaim],
                 fn ($userIdentifier) => $this->loadUser($payload, $userIdentifier)
             ),
-            new IsActiveCreditnal
+            new IsActiveCredential
         );
 
         $passport->setAttribute('payload', $payload);

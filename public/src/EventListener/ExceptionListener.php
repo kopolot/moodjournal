@@ -2,7 +2,6 @@
 
 namespace App\EventListener;
 
-use Traversable;
 use Psr\Log\LoggerInterface;
 use App\Response\ApiResponse;
 use Jawira\CaseConverter\Convert;
@@ -29,8 +28,9 @@ final class ExceptionListener
     {
         $exception = $event->getThrowable();
         if ($exception instanceof HttpExceptionInterface) {
-            $response = $this->getHttpExceptionResponse($exception);
-            $event->setResponse($response);
+            $event->setResponse($this->getHttpExceptionResponse($exception));
+
+            return;
         }
 
         if ('prod' === $this->environment) {
@@ -75,25 +75,5 @@ final class ExceptionListener
             500,
             'INTERNAL_SERVER_ERROR'
         );
-    }
-
-    private function getAssertionFailedMessages(Traversable $violations): array
-    {
-        $message = [];
-        foreach ($violations as $violation) {
-            /** @var \Symfony\Component\Validator\ConstraintViolation $violation */
-            $parts = [
-                strtolower(
-                    (new \ReflectionClass($violation->getRoot()))->getShortName()
-                ),
-                strtolower($violation->getPropertyPath()),
-                strtolower(
-                    (new \ReflectionClass($violation->getConstraint()))->getShortName()
-                ),
-                strtolower($violation->getConstraint()->getErrorName($violation->getCode()))
-            ];
-            $message[] = implode('.', $parts);
-        }
-        return $message;
     }
 }

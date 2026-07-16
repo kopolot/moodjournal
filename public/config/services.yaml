@@ -47,7 +47,6 @@ services:
         parent: lexik_jwt_authentication.security.jwt_authenticator
 
     security.authenticator.json_login.not_logged_in:
-    # brzydkie ale dziala
         class: App\Security\Authenticator\CustomJsonLoginAuthenticator
         parent: security.authenticator.json_login
         # factory: [ '@Symfony\Bundle\SecurityBundle\DependencyInjection\Security\Factory\JsonLoginFactory', 'createAuthenticator']

@@ -5,7 +5,8 @@ namespace App\Repository;
 use App\Entity\MoodEntry;
 use App\Entity\User;
 use Doctrine\Persistence\ManagerRegistry;
-use Kopolot\Utility\Repository\AbstractRepository;
+use Symfony\Bridge\Doctrine\Types\UuidType;
+use Symfony\Component\Uid\Uuid;
 
 /**
  * @extends AbstractRepository<MoodEntry>
@@ -22,9 +23,11 @@ class MoodEntryRepository extends AbstractRepository
      */
     public function findByUser(User $user, int $limit = 30, int $offset = 0): array
     {
+        $userId = $this->requireUserId($user);
+
         return $this->createQueryBuilder('m')
-            ->andWhere('m.user = :user')
-            ->setParameter('user', $user)
+            ->andWhere('IDENTITY(m.user) = :userId')
+            ->setParameter('userId', $userId, UuidType::NAME)
             ->orderBy('m.createdAt', 'DESC')
             ->setMaxResults($limit)
             ->setFirstResult($offset)
@@ -34,35 +37,40 @@ class MoodEntryRepository extends AbstractRepository
 
     public function countByUser(User $user): int
     {
+        $userId = $this->requireUserId($user);
+
         return (int) $this->createQueryBuilder('m')
             ->select('COUNT(m.id)')
-            ->andWhere('m.user = :user')
-            ->setParameter('user', $user)
+            ->andWhere('IDENTITY(m.user) = :userId')
+            ->setParameter('userId', $userId, UuidType::NAME)
             ->getQuery()
             ->getSingleScalarResult();
     }
 
     public function findOneForUser(User $user, string $id): ?MoodEntry
     {
+        $userId = $this->requireUserId($user);
+
         return $this->createQueryBuilder('m')
-            ->andWhere('m.user = :user')
+            ->andWhere('IDENTITY(m.user) = :userId')
             ->andWhere('m.id = :id')
-            ->setParameter('user', $user)
-            ->setParameter('id', $id)
+            ->setParameter('userId', $userId, UuidType::NAME)
+            ->setParameter('id', $id, UuidType::NAME)
             ->getQuery()
             ->getOneOrNullResult();
     }
 
     public function hasEntryOnDate(User $user, \DateTimeImmutable $day): bool
     {
+        $userId = $this->requireUserId($user);
         $start = $day->setTime(0, 0, 0);
         $end = $day->setTime(23, 59, 59);
 
         $count = (int) $this->createQueryBuilder('m')
             ->select('COUNT(m.id)')
-            ->andWhere('m.user = :user')
+            ->andWhere('IDENTITY(m.user) = :userId')
             ->andWhere('m.createdAt BETWEEN :start AND :end')
-            ->setParameter('user', $user)
+            ->setParameter('userId', $userId, UuidType::NAME)
             ->setParameter('start', $start)
             ->setParameter('end', $end)
             ->getQuery()
@@ -73,13 +81,14 @@ class MoodEntryRepository extends AbstractRepository
 
     public function averageOverallForUser(User $user, int $days = 7): ?float
     {
+        $userId = $this->requireUserId($user);
         $since = (new \DateTimeImmutable())->modify(sprintf('-%d days', $days));
 
         $result = $this->createQueryBuilder('m')
             ->select('AVG(m.overallMood)')
-            ->andWhere('m.user = :user')
+            ->andWhere('IDENTITY(m.user) = :userId')
             ->andWhere('m.createdAt >= :since')
-            ->setParameter('user', $user)
+            ->setParameter('userId', $userId, UuidType::NAME)
             ->setParameter('since', $since)
             ->getQuery()
             ->getSingleScalarResult();
@@ -92,15 +101,27 @@ class MoodEntryRepository extends AbstractRepository
      */
     public function findBetween(User $user, \DateTimeImmutable $from, \DateTimeImmutable $to): array
     {
+        $userId = $this->requireUserId($user);
+
         return $this->createQueryBuilder('m')
-            ->andWhere('m.user = :user')
+            ->andWhere('IDENTITY(m.user) = :userId')
             ->andWhere('m.createdAt >= :from')
             ->andWhere('m.createdAt < :to')
-            ->setParameter('user', $user)
+            ->setParameter('userId', $userId, UuidType::NAME)
             ->setParameter('from', $from)
             ->setParameter('to', $to)
             ->orderBy('m.createdAt', 'ASC')
             ->getQuery()
             ->getResult();
+    }
+
+    private function requireUserId(User $user): Uuid
+    {
+        $userId = $user->getId();
+        if ($userId === null) {
+            throw new \InvalidArgumentException('User must have an id.');
+        }
+
+        return $userId;
     }
 }

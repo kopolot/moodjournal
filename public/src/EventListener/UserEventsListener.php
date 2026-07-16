@@ -15,7 +15,7 @@ use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Symfony\Component\Security\Http\Event\CheckPassportEvent;
 use Symfony\Component\HttpKernel\Exception\LockedHttpException;
 use Symfony\Component\EventDispatcher\Attribute\AsEventListener;
-use App\Security\Authenticator\Passport\Credentials\IsActiveCreditnal;
+use App\Security\Authenticator\Passport\Credentials\IsActiveCredential;
 
 class UserEventsListener
 {
@@ -60,7 +60,7 @@ class UserEventsListener
     public function checkPassport(CheckPassportEvent $event)
     {
         $passport = $event->getPassport();
-        if ($passport->hasBadge(IsActiveCreditnal::class)) {
+        if ($passport->hasBadge(IsActiveCredential::class)) {
             /** @var User $user */
             $user = $passport->getUser();
             if (!$user->isActive()) {
