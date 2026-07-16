@@ -13,7 +13,7 @@ use Symfony\Contracts\Cache\ItemInterface;
 
 /**
  * Pattern-based mood analysis + coaching for Plus/Pro.
- * Deterministic (no external LLM required); optional narrative polish later.
+ * Deterministic by default; optionally polishes narrative via OpenAI-compatible LLM.
  */
 class MoodAnalysisService
 {
@@ -24,6 +24,7 @@ class MoodAnalysisService
     public function __construct(
         private MoodEntryRepository $moodEntryRepository,
         private CacheInterface $moodCache,
+        private OpenAiCompatibleClient $openAiCompatibleClient,
     ) {
     }
 
@@ -84,6 +85,7 @@ class MoodAnalysisService
                 'minEntries' => self::MIN_ENTRIES,
                 'ready' => false,
                 'summary' => null,
+                'narrative' => null,
                 'trend' => 'insufficient_data',
                 'averageOverall' => null,
                 'aspectInsights' => [],
@@ -112,7 +114,7 @@ class MoodAnalysisService
         $highlights = $this->highlights($entries, $aspectInsights, $trend, $volatility);
         $coachingTips = $this->coachingTips($aspectInsights, $trend, $volatility, $user->getCurrentStreak());
 
-        return [
+        $analysis = [
             'unlocked' => true,
             'tier' => $tier->value,
             'engine' => 'pattern',
@@ -134,6 +136,7 @@ class MoodAnalysisService
                     'volatility' => $volatility,
                 ],
             ],
+            'narrative' => null,
             'trend' => $trend,
             'averageOverall' => $averageOverall,
             'volatility' => $volatility,
@@ -142,6 +145,77 @@ class MoodAnalysisService
             'highlights' => $highlights,
             'generatedAt' => (new \DateTimeImmutable())->format(DATE_ATOM),
         ];
+
+        return $this->maybeEnrichWithLlm($analysis);
+    }
+
+    /**
+     * @param array<string, mixed> $analysis
+     *
+     * @return array<string, mixed>
+     */
+    private function maybeEnrichWithLlm(array $analysis): array
+    {
+        if (!$this->openAiCompatibleClient->isEnabled()) {
+            return $analysis;
+        }
+
+        $payload = [
+            'trend' => $analysis['trend'],
+            'averageOverall' => $analysis['averageOverall'],
+            'volatility' => $analysis['volatility'] ?? null,
+            'entryCount' => $analysis['entryCount'],
+            'windowDays' => $analysis['windowDays'],
+            'aspectInsights' => $analysis['aspectInsights'],
+            'highlights' => $analysis['highlights'],
+            'coachingTips' => $analysis['coachingTips'],
+        ];
+
+        $messages = [
+            [
+                'role' => 'system',
+                'content' => 'You are a supportive mood coach for MoodDic. '
+                    . 'Use ONLY the provided JSON stats. Do not invent medical advice. '
+                    . 'Reply with a JSON object: {"headline": string, "detail": string, "tips": string[]} '
+                    . 'Keep headline <= 80 chars, detail <= 220 chars, max 3 short tips.',
+            ],
+            [
+                'role' => 'user',
+                'content' => json_encode($payload, JSON_THROW_ON_ERROR),
+            ],
+        ];
+
+        $llm = $this->openAiCompatibleClient->chatJson($messages);
+        if ($llm === null) {
+            return $analysis;
+        }
+
+        $headline = is_string($llm['headline'] ?? null) ? trim($llm['headline']) : '';
+        $detail = is_string($llm['detail'] ?? null) ? trim($llm['detail']) : '';
+        $tips = [];
+        if (isset($llm['tips']) && \is_array($llm['tips'])) {
+            foreach ($llm['tips'] as $tip) {
+                if (is_string($tip) && trim($tip) !== '') {
+                    $tips[] = trim($tip);
+                }
+                if (\count($tips) >= 3) {
+                    break;
+                }
+            }
+        }
+
+        if ($headline === '' && $detail === '' && $tips === []) {
+            return $analysis;
+        }
+
+        $analysis['engine'] = 'pattern+llm';
+        $analysis['narrative'] = [
+            'headline' => $headline !== '' ? $headline : null,
+            'detail' => $detail !== '' ? $detail : null,
+            'tips' => $tips,
+        ];
+
+        return $analysis;
     }
 
     /**

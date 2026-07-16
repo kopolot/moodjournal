@@ -118,6 +118,58 @@ Gamification (on `User` + first-of-day bonus):
 
 CORS allows browser origins on localhost and private LAN IPs so Expo web / LAN devices can call the API.
 
+## AI mood analysis
+
+`GET /mood/analysis` (Plus/Pro) always runs the built-in **pattern engine** (trends, aspect focus, coaching tip keys).  
+**No LLM key is required** — the API and tests work out of the box.
+
+### Optional LLM narrative (OpenAI-compatible)
+
+If you want richer wording, set:
+
+```bash
+OPENAI_API_KEY=…                 # required for cloud providers; for Ollama can be `ollama`
+OPENAI_BASE_URL=                 # empty → https://api.openai.com/v1
+OPENAI_MODEL=gpt-4o-mini
+```
+
+Compatible backends: **OpenAI**, **Groq**, **OpenRouter**, **Ollama** (`/v1` chat completions).
+
+When the LLM call succeeds, the response includes:
+
+- `engine: "pattern+llm"`
+- `narrative: { headline, detail, tips[] }`
+
+On timeout/error the pattern payload is returned unchanged (`engine: "pattern"`).
+
+### Local model (Ollama) — GPU required for comfort
+
+Local inference is **optional** and meant for developers with a strong GPU.  
+Laptops without a discrete GPU can still use MoodDic — just leave `OPENAI_*` empty.
+
+Example (AMD Radeon with ~12 GB VRAM, e.g. RX 6700 XT):
+
+```bash
+# install Ollama, then pull a 7B–8B instruct model
+ollama pull llama3.1:8b
+# or: ollama pull qwen2.5:7b
+
+# in public/.env (API container must reach the host)
+OPENAI_BASE_URL=http://172.255.0.1:11434/v1
+OPENAI_API_KEY=ollama
+OPENAI_MODEL=llama3.1:8b
+```
+
+| Requirement | Guidance |
+|-------------|----------|
+| GPU VRAM | **≥ 8 GB** recommended for 7B Q4/Q5; **12 GB** comfortable (RX 6700 XT class) |
+| CPU-only | possible but slow — not recommended for interactive demo |
+| Model size | Prefer **7B–8B instruct**; 13B OK on 12 GB; 30B+ usually too heavy |
+| Backend | Ollama or llama.cpp with OpenAI-compatible `/v1` |
+| Privacy | Mood aggregates are sent to the configured endpoint — keep it local if that matters |
+
+> **Portfolio default:** keep LLM disabled. Pattern analysis is enough to demo Plus/Pro unlocks without hardware or paid keys.
+
 ## Tests
 
 ```bash
