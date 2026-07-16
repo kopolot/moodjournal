@@ -23,6 +23,10 @@ Start stack:
 
 ```bash
 UID=$(id -u) docker compose up -d --build
+
+# optional local LLM (Ollama + model pull; needs strong GPU):
+UID=$(id -u) docker compose --profile llm up -d
+# then set OPENAI_* in public/.env.dev.local → http://ollama:11434/v1
 ```
 
 Console / tests / migrate:
@@ -31,6 +35,8 @@ Console / tests / migrate:
 docker exec mood_dic-php-1 php bin/console …
 docker exec mood_dic-php-1 php bin/console doctrine:migrations:migrate --no-interaction
 docker exec mood_dic-php-1 php bin/phpunit
+# real Ollama (compose --profile llm must be up):
+docker exec mood_dic-php-1 composer test:local-llm
 ```
 
 Composer may be missing from PATH inside the image; use a host Composer against `public/` or `php composer.phar` if present.
@@ -96,7 +102,7 @@ Security: `/mood*` requires `IS_AUTHENTICATED_FULLY` (`public/config/packages/se
 ## What not to build unless asked
 
 - Large unrelated refactors
-- External LLM providers for mood analysis unless asked (default engine is pattern-based in `MoodAnalysisService`)
+- Forcing an LLM dependency (default mood analysis stays pattern-based; optional OpenAI-compatible layer is in `OpenAiCompatibleClient`)
 - Completing password-reset UX end-to-end (routes exist; treat as incomplete unless requested)
 - Reintroducing a utility/vendor bundle for `AbstractRepository`
 - MCP servers for this repo (none required; use user-level Cursor MCP if needed)

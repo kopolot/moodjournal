@@ -118,6 +118,83 @@ Gamification (on `User` + first-of-day bonus):
 
 CORS allows browser origins on localhost and private LAN IPs so Expo web / LAN devices can call the API.
 
+## AI mood analysis
+
+`GET /mood/analysis` (Plus/Pro) always runs the built-in **pattern engine** (trends, aspect focus, coaching tip keys).  
+**No LLM key is required** — the API and tests work out of the box.
+
+### Optional LLM narrative (OpenAI-compatible)
+
+If you want richer wording, set:
+
+```bash
+OPENAI_API_KEY=…                 # required for cloud providers; for Ollama can be `ollama`
+OPENAI_BASE_URL=                 # empty → https://api.openai.com/v1
+OPENAI_MODEL=gpt-4o-mini
+```
+
+Compatible backends: **OpenAI**, **Groq**, **OpenRouter**, **Ollama** (`/v1` chat completions).
+
+When the LLM call succeeds, the response includes:
+
+- `engine: "pattern+llm"`
+- `narrative: { headline, detail, tips[] }`
+
+On timeout/error the pattern payload is returned unchanged (`engine: "pattern"`).
+
+### Local model (Ollama) — optional Compose profile + strong GPU
+
+Local inference is **optional**. Without a discrete GPU, leave `OPENAI_*` empty and use the pattern engine.
+
+#### Docker Compose (recommended for this repo)
+
+Ollama is **not** part of the default stack. Start it with the `llm` profile:
+
+```bash
+# pulls llama3.1:8b on first run (override with OLLAMA_MODEL=…)
+UID=$(id -u) docker compose --profile llm up -d
+
+# enable API → Ollama (copy from .env.dev.local.example)
+# public/.env.dev.local:
+OPENAI_BASE_URL=http://ollama:11434/v1
+OPENAI_API_KEY=ollama
+OPENAI_MODEL=llama3.1:8b
+```
+
+Services:
+
+| Service | Role |
+|---------|------|
+| `ollama` | OpenAI-compatible server on the Docker network (`http://ollama:11434`) |
+| `ollama-init` | One-shot pull of `${OLLAMA_MODEL:-llama3.1:8b}` |
+
+GPU notes:
+
+- Compose mounts `/dev/dri` for AMD/Intel GPUs (e.g. **RX 6700 XT / 12 GB**).
+- **You need a strong GPU** for a usable demo (≥ **8 GB** VRAM; **12 GB** comfortable for 7B–8B).
+- CPU-only inside the container is possible but **slow** — fine for a smoke test, not for UX.
+- First `ollama pull` downloads several GB; keep `ollama_data` volume.
+
+#### Host Ollama (alternative)
+
+```bash
+ollama pull llama3.1:8b
+# public/.env — API container → host gateway
+OPENAI_BASE_URL=http://172.255.0.1:11434/v1
+OPENAI_API_KEY=ollama
+OPENAI_MODEL=llama3.1:8b
+```
+
+| Requirement | Guidance |
+|-------------|----------|
+| GPU VRAM | **≥ 8 GB** recommended for 7B Q4/Q5; **12 GB** comfortable (RX 6700 XT class) |
+| CPU-only | possible but slow — not recommended for interactive demo |
+| Model size | Prefer **7B–8B instruct**; 13B OK on 12 GB; 30B+ usually too heavy |
+| Backend | Compose `ollama` profile, host Ollama, or any OpenAI-compatible `/v1` |
+| Privacy | Mood aggregates are sent to the configured endpoint — keep it local if that matters |
+
+> **Portfolio default:** do **not** enable `--profile llm`. Pattern analysis demos Plus/Pro without hardware or paid keys.
+
 ## Tests
 
 ```bash
@@ -125,6 +202,21 @@ docker exec mood_dic-php-1 php bin/phpunit
 ```
 
 PHPUnit uses a self-contained SQLite DB (`tests/bootstrap.php` → `var/test.db`) so the suite does not require the Docker Postgres instance.
+
+### Local LLM integration (real Ollama)
+
+Default suite **excludes** live Ollama tests. With compose profile `llm` running:
+
+```bash
+UID=$(id -u) docker compose --profile llm up -d
+# wait for ollama-init to finish pulling the model
+
+docker exec mood_dic-php-1 composer test:local-llm
+# or: docker exec mood_dic-php-1 php bin/phpunit tests/Integration/LocalLlm
+```
+
+This hits `GET /mood/analysis` end-to-end against real Ollama and asserts `engine=pattern+llm` plus a non-empty `narrative`.  
+Skipped automatically if Ollama/model is unavailable. Not part of the default suite.
 
 ## Known gaps
 

@@ -77,6 +77,41 @@ services:
       - redis_data:/data
     command: ["redis-server", "--save", "60", "1", "--loglevel", "warning"]
 
+  # Optional local LLM (OpenAI-compatible). Not started by default — needs a strong GPU.
+  #   UID=$(id -u) docker compose --profile llm up -d
+  # Then set OPENAI_* in public/.env.dev.local (see .env.dev.local.example).
+  ollama:
+    profiles: ["llm"]
+    image: ollama/ollama:latest
+    networks:
+      - app_network
+    hostname: ollama
+    volumes:
+      - ollama_data:/root/.ollama
+    # AMD/Intel GPU via DRI (RX 6700 XT etc.). CPU-only still works, but is slow.
+    devices:
+      - /dev/dri:/dev/dri
+    group_add:
+      - video
+    environment:
+      OLLAMA_HOST: 0.0.0.0:11434
+    # No host port publish on purpose — PHP reaches it as http://ollama:11434
+
+  ollama-init:
+    profiles: ["llm"]
+    image: ollama/ollama:latest
+    networks:
+      - app_network
+    depends_on:
+      - ollama
+    volumes:
+      - ./docker/ollama/pull-model.sh:/pull-model.sh:ro
+    environment:
+      OLLAMA_HOST: http://ollama:11434
+      OLLAMA_MODEL: ${OLLAMA_MODEL:-llama3.1:8b}
+    entrypoint: ["/bin/sh", "/pull-model.sh"]
+    restart: "no"
+
 networks:
   app_network:
     ipam:
@@ -87,3 +122,4 @@ networks:
 volumes:
   postgres_data:
   redis_data:
+  ollama_data:

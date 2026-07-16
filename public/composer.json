@@ -24,6 +24,7 @@
         "symfony/expression-language": "8.1.*",
         "symfony/flex": "^2.11",
         "symfony/framework-bundle": "8.1.*",
+        "symfony/http-client": "8.1.*",
         "symfony/mailer": "8.1.*",
         "symfony/messenger": "8.1.*",
         "symfony/monolog-bundle": "^4.0",
@@ -74,6 +75,8 @@
             "cache:clear": "symfony-cmd",
             "assets:install %PUBLIC_DIR%": "symfony-cmd"
         },
+        "test": "php bin/phpunit",
+        "test:local-llm": "php bin/phpunit tests/Integration/LocalLlm",
         "post-install-cmd": [
             "@auto-scripts"
         ],

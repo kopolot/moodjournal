@@ -13,7 +13,7 @@ use Symfony\Contracts\Cache\ItemInterface;
 
 /**
  * Pattern-based mood analysis + coaching for Plus/Pro.
- * Deterministic (no external LLM required); optional narrative polish later.
+ * Deterministic by default; optionally polishes narrative via OpenAI-compatible LLM.
  */
 class MoodAnalysisService
 {
@@ -21,37 +21,50 @@ class MoodAnalysisService
     public const MIN_ENTRIES = 3;
     private const CACHE_TTL = 600;
 
+    /** @var list<string> */
+    private const SUPPORTED_LOCALES = ['en', 'pl', 'fr', 'es'];
+
     public function __construct(
         private MoodEntryRepository $moodEntryRepository,
         private CacheInterface $moodCache,
+        private OpenAiCompatibleClient $openAiCompatibleClient,
     ) {
     }
 
     /**
      * @return array<string, mixed>
      */
-    public function analyze(User $user, bool $forceRefresh = false): array
+    public function analyze(User $user, bool $forceRefresh = false, ?string $locale = null): array
     {
         $tier = $this->requireAiAccess($user);
-        $cacheKey = $this->cacheKey($user);
+        $locale = $this->resolveLocale($user, $locale);
+        $cacheKey = $this->cacheKey($user, $locale);
 
         if ($forceRefresh) {
             $this->moodCache->delete($cacheKey);
         }
 
         /** @var array<string, mixed> $analysis */
-        $analysis = $this->moodCache->get($cacheKey, function (ItemInterface $item) use ($user, $tier): array {
-            $item->expiresAfter(self::CACHE_TTL);
+        $analysis = $this->moodCache->get(
+            $cacheKey,
+            function (ItemInterface $item) use ($user, $tier, $locale, $forceRefresh): array {
+                $item->expiresAfter(self::CACHE_TTL);
 
-            return $this->buildAnalysis($user, $tier);
-        });
+                return $this->buildAnalysis($user, $tier, $locale, $forceRefresh);
+            }
+        );
 
         return $analysis;
     }
 
     public function invalidate(User $user): void
     {
-        $this->moodCache->delete($this->cacheKey($user));
+        $id = $user->getId()?->toRfc4122() ?? 'unknown';
+        // Legacy key (pre-locale) + one key per supported locale.
+        $this->moodCache->delete('mood_analysis_' . $id);
+        foreach (self::SUPPORTED_LOCALES as $locale) {
+            $this->moodCache->delete($this->cacheKey($user, $locale));
+        }
     }
 
     private function requireAiAccess(User $user): SubscriptionTier
@@ -67,8 +80,12 @@ class MoodAnalysisService
     /**
      * @return array<string, mixed>
      */
-    private function buildAnalysis(User $user, SubscriptionTier $tier): array
-    {
+    private function buildAnalysis(
+        User $user,
+        SubscriptionTier $tier,
+        string $locale = 'en',
+        bool $forceRefresh = false,
+    ): array {
         $to = (new \DateTimeImmutable('today'))->modify('+1 day');
         $from = $to->modify(sprintf('-%d days', self::WINDOW_DAYS));
         $entries = $this->moodEntryRepository->findBetween($user, $from, $to);
@@ -79,11 +96,13 @@ class MoodAnalysisService
                 'unlocked' => true,
                 'tier' => $tier->value,
                 'engine' => 'pattern',
+                'locale' => $locale,
                 'windowDays' => self::WINDOW_DAYS,
                 'entryCount' => $entryCount,
                 'minEntries' => self::MIN_ENTRIES,
                 'ready' => false,
                 'summary' => null,
+                'narrative' => null,
                 'trend' => 'insufficient_data',
                 'averageOverall' => null,
                 'aspectInsights' => [],
@@ -112,10 +131,11 @@ class MoodAnalysisService
         $highlights = $this->highlights($entries, $aspectInsights, $trend, $volatility);
         $coachingTips = $this->coachingTips($aspectInsights, $trend, $volatility, $user->getCurrentStreak());
 
-        return [
+        $analysis = [
             'unlocked' => true,
             'tier' => $tier->value,
             'engine' => 'pattern',
+            'locale' => $locale,
             'windowDays' => self::WINDOW_DAYS,
             'entryCount' => $entryCount,
             'minEntries' => self::MIN_ENTRIES,
@@ -134,6 +154,7 @@ class MoodAnalysisService
                     'volatility' => $volatility,
                 ],
             ],
+            'narrative' => null,
             'trend' => $trend,
             'averageOverall' => $averageOverall,
             'volatility' => $volatility,
@@ -142,6 +163,89 @@ class MoodAnalysisService
             'highlights' => $highlights,
             'generatedAt' => (new \DateTimeImmutable())->format(DATE_ATOM),
         ];
+
+        return $this->maybeEnrichWithLlm($analysis, $locale, $forceRefresh);
+    }
+
+    /**
+     * @param array<string, mixed> $analysis
+     *
+     * @return array<string, mixed>
+     */
+    private function maybeEnrichWithLlm(array $analysis, string $locale, bool $forceRefresh = false): array
+    {
+        if (!$this->openAiCompatibleClient->isEnabled()) {
+            return $analysis;
+        }
+
+        $payload = [
+            'locale' => $locale,
+            'trend' => $analysis['trend'],
+            'averageOverall' => $analysis['averageOverall'],
+            'volatility' => $analysis['volatility'] ?? null,
+            'entryCount' => $analysis['entryCount'],
+            'windowDays' => $analysis['windowDays'],
+            'aspectInsights' => $analysis['aspectInsights'],
+            'highlights' => $analysis['highlights'],
+            'coachingTips' => $analysis['coachingTips'],
+        ];
+        if ($forceRefresh) {
+            // Nudge the model away from repeating the previous cached phrasing.
+            $payload['freshnessToken'] = bin2hex(random_bytes(4));
+        }
+
+        $languageRule = $this->languageInstruction($locale);
+        $refreshRule = $forceRefresh
+            ? ' This is a refresh request: rewrite headline/detail/tips with fresh wording.'
+            : '';
+
+        $messages = [
+            [
+                'role' => 'system',
+                'content' => 'You are a supportive mood coach for MoodDic. '
+                    . 'Use ONLY the provided JSON stats. Do not invent medical advice. '
+                    . $languageRule . ' '
+                    . 'Reply with a JSON object: {"headline": string, "detail": string, "tips": string[]} '
+                    . 'Keep headline <= 80 chars, detail <= 220 chars, max 3 short tips.'
+                    . $refreshRule,
+            ],
+            [
+                'role' => 'user',
+                'content' => json_encode($payload, JSON_THROW_ON_ERROR),
+            ],
+        ];
+
+        $llm = $this->openAiCompatibleClient->chatJson($messages);
+        if ($llm === null) {
+            return $analysis;
+        }
+
+        $headline = is_string($llm['headline'] ?? null) ? trim($llm['headline']) : '';
+        $detail = is_string($llm['detail'] ?? null) ? trim($llm['detail']) : '';
+        $tips = [];
+        if (isset($llm['tips']) && \is_array($llm['tips'])) {
+            foreach ($llm['tips'] as $tip) {
+                if (is_string($tip) && trim($tip) !== '') {
+                    $tips[] = trim($tip);
+                }
+                if (\count($tips) >= 3) {
+                    break;
+                }
+            }
+        }
+
+        if ($headline === '' && $detail === '' && $tips === []) {
+            return $analysis;
+        }
+
+        $analysis['engine'] = 'pattern+llm';
+        $analysis['narrative'] = [
+            'headline' => $headline !== '' ? $headline : null,
+            'detail' => $detail !== '' ? $detail : null,
+            'tips' => $tips,
+        ];
+
+        return $analysis;
     }
 
     /**
@@ -392,8 +496,36 @@ class MoodAnalysisService
         return array_slice($tips, 0, 5);
     }
 
-    private function cacheKey(User $user): string
+    private function cacheKey(User $user, string $locale = 'en'): string
     {
-        return 'mood_analysis_' . ($user->getId()?->toRfc4122() ?? 'unknown');
+        return 'mood_analysis_' . ($user->getId()?->toRfc4122() ?? 'unknown') . '_' . $locale;
+    }
+
+    private function resolveLocale(User $user, ?string $requested): string
+    {
+        $candidate = is_string($requested) && trim($requested) !== ''
+            ? $requested
+            : (is_string(($user->getPreferences() ?? [])['language'] ?? null)
+                ? (string) $user->getPreferences()['language']
+                : 'en');
+
+        $normalized = strtolower(str_replace('_', '-', trim($candidate)));
+
+        return match (true) {
+            str_starts_with($normalized, 'pl') => 'pl',
+            str_starts_with($normalized, 'fr') => 'fr',
+            str_starts_with($normalized, 'es') => 'es',
+            default => 'en',
+        };
+    }
+
+    private function languageInstruction(string $locale): string
+    {
+        return match ($locale) {
+            'pl' => 'Write the entire JSON response (headline, detail, tips) in Polish (polski).',
+            'fr' => 'Write the entire JSON response (headline, detail, tips) in French.',
+            'es' => 'Write the entire JSON response (headline, detail, tips) in Spanish.',
+            default => 'Write the entire JSON response (headline, detail, tips) in English.',
+        };
     }
 }

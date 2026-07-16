@@ -11,6 +11,9 @@ parameters:
     env(STRIPE_WEBHOOK_SECRET): ''
     env(STRIPE_PRICE_PLUS): ''
     env(STRIPE_PRICE_PRO): ''
+    env(OPENAI_API_KEY): ''
+    env(OPENAI_BASE_URL): ''
+    env(OPENAI_MODEL): 'gpt-4o-mini'
 
 services:
     # default configuration for services in *this* file
@@ -34,6 +37,12 @@ services:
     App\Service\MoodAnalysisService:
         arguments:
             $moodCache: '@cache.mood'
+
+    App\Service\OpenAiCompatibleClient:
+        arguments:
+            $apiKey: '%env(string:default::OPENAI_API_KEY)%'
+            $baseUrl: '%env(string:default::OPENAI_BASE_URL)%'
+            $model: '%env(string:default::OPENAI_MODEL)%'
 
     App\Service\StripeBillingService:
         arguments:
