@@ -55,7 +55,7 @@ class MoodEntryRepository extends AbstractRepository
             ->andWhere('IDENTITY(m.user) = :userId')
             ->andWhere('m.id = :id')
             ->setParameter('userId', $userId, UuidType::NAME)
-            ->setParameter('id', $id)
+            ->setParameter('id', $id, UuidType::NAME)
             ->getQuery()
             ->getOneOrNullResult();
     }

@@ -12,6 +12,13 @@ final class TestDatabase
     {
         /** @var EntityManagerInterface $entityManager */
         $entityManager = $container->get(EntityManagerInterface::class);
+        $connection = $entityManager->getConnection();
+        $connection->close();
+
+        $dbPath = dirname(__DIR__, 2) . '/var/test.db';
+        if (is_file($dbPath)) {
+            unlink($dbPath);
+        }
         $metadata = $entityManager->getMetadataFactory()->getAllMetadata();
 
         if ($metadata === []) {

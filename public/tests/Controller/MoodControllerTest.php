@@ -89,15 +89,98 @@ final class MoodControllerTest extends WebTestCase
         $this->assertEquals(5.0, $statsData['data']['averageOverall7d']);
     }
 
+    public function testGetUpdateDeleteAndHintsFlowWorksForOwnedEntry(): void
+    {
+        $client = static::createClient();
+        $token = $this->createAuthenticatedUserAndLogin($client, 'mood-flow');
+
+        $client->setServerParameter('HTTP_AUTHORIZATION', 'Bearer ' . $token);
+        $client->request(
+            'POST',
+            '/mood',
+            [],
+            [],
+            ['CONTENT_TYPE' => 'application/json'],
+            json_encode([
+                'overallMood' => 4,
+                'note' => 'Today felt balanced overall.',
+                'aspects' => $this->buildAspectPayload(),
+            ])
+        );
+        $this->assertResponseStatusCodeSame(Response::HTTP_CREATED);
+        $created = json_decode($client->getResponse()->getContent(), true);
+        $entryId = $created['data']['entry']['id'];
+
+        $client->request('GET', '/mood/' . $entryId);
+        $this->assertResponseStatusCodeSame(Response::HTTP_OK);
+        $getData = json_decode($client->getResponse()->getContent(), true);
+        $this->assertSame($entryId, $getData['data']['entry']['id']);
+
+        $client->request(
+            'PATCH',
+            '/mood/' . $entryId,
+            [],
+            [],
+            ['CONTENT_TYPE' => 'application/json'],
+            json_encode([
+                'overallMood' => 5,
+                'note' => 'Updated mood note',
+                'aspects' => $this->buildAspectPayload(score: 5),
+            ])
+        );
+        $this->assertResponseStatusCodeSame(Response::HTTP_OK);
+        $updated = json_decode($client->getResponse()->getContent(), true);
+        $this->assertSame(\App\Translation\MoodTranslationKeys::MOOD_UPDATED, $updated['message'][0]);
+        $this->assertSame(5, $updated['data']['entry']['overallMood']);
+
+        $client->request('GET', '/mood/checkin-hints');
+        $this->assertResponseStatusCodeSame(Response::HTTP_OK);
+        $hints = json_decode($client->getResponse()->getContent(), true);
+        $this->assertTrue($hints['success']);
+        $this->assertArrayHasKey('overallAverage', $hints['data']);
+        $this->assertArrayHasKey('aspectAverages', $hints['data']);
+        $this->assertFalse($hints['data']['noticeableDrop']);
+
+        $client->request('DELETE', '/mood/' . $entryId);
+        $this->assertResponseStatusCodeSame(Response::HTTP_OK);
+        $deleted = json_decode($client->getResponse()->getContent(), true);
+        $this->assertSame(\App\Translation\MoodTranslationKeys::MOOD_DELETED, $deleted['message'][0]);
+
+        $client->request('GET', '/mood/' . $entryId);
+        $this->assertResponseStatusCodeSame(Response::HTTP_NOT_FOUND);
+    }
+
+    public function testMoodEndpointsRequireAuthentication(): void
+    {
+        $client = static::createClient();
+
+        $client->request('GET', '/mood');
+        $this->assertResponseStatusCodeSame(Response::HTTP_UNAUTHORIZED);
+
+        $client->request(
+            'POST',
+            '/mood',
+            [],
+            [],
+            ['CONTENT_TYPE' => 'application/json'],
+            json_encode([
+                'overallMood' => 4,
+                'note' => 'Unauthenticated request',
+                'aspects' => $this->buildAspectPayload(),
+            ])
+        );
+        $this->assertResponseStatusCodeSame(Response::HTTP_UNAUTHORIZED);
+    }
+
     /**
      * @return array<string, array{score: int, note: string}>
      */
-    private function buildAspectPayload(): array
+    private function buildAspectPayload(int $score = 4): array
     {
         $payload = [];
         foreach (MoodEntry::ASPECT_KEYS as $key) {
             $payload[$key] = [
-                'score' => 4,
+                'score' => $score,
                 'note' => sprintf('%s note', $key),
             ];
         }

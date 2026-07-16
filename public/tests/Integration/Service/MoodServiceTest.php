@@ -78,6 +78,56 @@ final class MoodServiceTest extends KernelTestCase
         $this->assertSame(4, $freshUser->getLongestStreak());
     }
 
+    public function testUpdateChangesOwnedEntryValues(): void
+    {
+        $user = $this->createUser();
+        $entry = $this->createMoodEntry($user, overallMood: 4);
+
+        $dto = $this->buildMoodDto(withAspectNotes: true, withOverallNote: true, overallMood: 6, aspectScore: 6);
+        $dto->note = 'Updated integration note';
+
+        $updated = $this->moodService->update($user, $entry->getId()?->toRfc4122() ?? '', $dto);
+
+        $this->assertSame(6, $updated->getOverallMood());
+        $this->assertSame('Updated integration note', $updated->getNote());
+        $this->assertSame(6, $updated->getAspects()[MoodEntry::ASPECT_KEYS[0]]['score']);
+    }
+
+    public function testDeleteRemovesOwnedEntry(): void
+    {
+        $user = $this->createUser();
+        $entry = $this->createMoodEntry($user, overallMood: 4);
+
+        $this->moodService->delete($user, $entry->getId()?->toRfc4122() ?? '');
+
+        $this->assertCount(0, $this->entityManager->getRepository(MoodEntry::class)->findAll());
+    }
+
+    public function testCheckinHintsDetectNoticeableDropFromPriorWindow(): void
+    {
+        $user = $this->createUser();
+
+        $this->createMoodEntry(
+            $user,
+            overallMood: 6,
+            createdAt: new \DateTimeImmutable('-14 days'),
+            updatedAt: new \DateTimeImmutable('-14 days')
+        );
+        $this->createMoodEntry(
+            $user,
+            overallMood: 2,
+            createdAt: new \DateTimeImmutable('-2 days'),
+            updatedAt: new \DateTimeImmutable('-2 days')
+        );
+
+        $hints = $this->moodService->checkinHints($user);
+
+        $this->assertTrue($hints['noticeableDrop']);
+        $this->assertEquals(2.0, $hints['overallAverage']);
+        $this->assertEquals(6.0, $hints['priorOverallAverage']);
+        $this->assertArrayHasKey(MoodEntry::ASPECT_KEYS[0], $hints['aspectAverages']);
+    }
+
     private function createUser(
         int $currentStreak = 0,
         int $longestStreak = 0,
@@ -100,20 +150,78 @@ final class MoodServiceTest extends KernelTestCase
         return $user;
     }
 
-    private function buildMoodDto(bool $withAspectNotes, bool $withOverallNote): MoodEntryDto
+    private function createMoodEntry(
+        User $user,
+        int $overallMood,
+        ?\DateTimeImmutable $createdAt = null,
+        ?\DateTimeImmutable $updatedAt = null,
+    ): MoodEntry {
+        /** @var User $managedUser */
+        $managedUser = $this->entityManager->getReference(User::class, $user->getId());
+
+        $entry = (new MoodEntry())
+            ->setUser($managedUser)
+            ->setOverallMood($overallMood)
+            ->setAspects($this->buildAspects(score: $overallMood, withNotes: true))
+            ->setNote(sprintf('Mood note %d', $overallMood))
+            ->setXpEarned(0);
+
+        $this->entityManager->persist($entry);
+        $this->entityManager->flush();
+
+        if ($createdAt !== null) {
+            $this->entityManager->getConnection()->executeStatement(
+                'UPDATE mood_entry SET created_at = :createdAt WHERE hex(id) = :id',
+                [
+                    'createdAt' => $createdAt->format('Y-m-d H:i:s'),
+                    'id' => strtoupper(str_replace('-', '', $entry->getId()?->toRfc4122() ?? '')),
+                ]
+            );
+        }
+        if ($updatedAt !== null) {
+            $this->entityManager->getConnection()->executeStatement(
+                'UPDATE mood_entry SET updated_at = :updatedAt WHERE hex(id) = :id',
+                [
+                    'updatedAt' => $updatedAt->format('Y-m-d H:i:s'),
+                    'id' => strtoupper(str_replace('-', '', $entry->getId()?->toRfc4122() ?? '')),
+                ]
+            );
+        }
+        if ($createdAt !== null || $updatedAt !== null) {
+            $this->entityManager->clear(MoodEntry::class);
+        }
+
+        return $entry;
+    }
+
+    private function buildMoodDto(
+        bool $withAspectNotes,
+        bool $withOverallNote,
+        int $overallMood = 4,
+        int $aspectScore = 4,
+    ): MoodEntryDto
     {
         $dto = new MoodEntryDto();
-        $dto->overallMood = 4;
+        $dto->overallMood = $overallMood;
         $dto->note = $withOverallNote ? 'Today felt balanced overall.' : null;
-        $dto->aspects = [];
+        $dto->aspects = $this->buildAspects($aspectScore, $withAspectNotes);
 
+        return $dto;
+    }
+
+    /**
+     * @return array<string, array{score: int, note: ?string}>
+     */
+    private function buildAspects(int $score, bool $withNotes): array
+    {
+        $aspects = [];
         foreach (MoodEntry::ASPECT_KEYS as $key) {
-            $dto->aspects[$key] = [
-                'score' => 4,
-                'note' => $withAspectNotes ? sprintf('%s note', $key) : null,
+            $aspects[$key] = [
+                'score' => $score,
+                'note' => $withNotes ? sprintf('%s note', $key) : null,
             ];
         }
 
-        return $dto;
+        return $aspects;
     }
 }
