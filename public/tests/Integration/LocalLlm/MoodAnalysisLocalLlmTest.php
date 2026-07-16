@@ -10,8 +10,6 @@ use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
-use Spatie\Async\Pool;
-use GuzzleHttp\Client as GuzzleClient;
 
 /**
  * Real end-to-end check against local Ollama (compose profile `llm`).
