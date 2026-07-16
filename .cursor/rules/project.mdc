@@ -7,8 +7,12 @@ alwaysApply: true
 
 Prototype Symfony 8.1 JSON API + Docker. Companion app: `moodjournalmobile` on GitHub.
 
-- Mood domain lives under `/mood` (check-ins, XP, streaks). Prefer extending that over inventing parallel APIs.
-- Stack runs via Docker Compose; only publish Apache on host port **8080**.
-- Symfony root is `public/`; HTTP docroot is `public/public/`.
+- Mood domain under `/mood` (check-ins, XP, streaks, check-in hints). Prefer extending that over parallel APIs.
+- Aspects: 8 life keys in `MoodEntry::ASPECT_KEYS` + separate `overallMood` — not the old 4-key set.
+- Stack via Docker Compose; only publish Apache on host port **8080**.
+- Symfony root: `public/`; HTTP docroot: `public/public/`.
+- Shared repo base: `App\Repository\AbstractRepository` (no `Kopolot\\Utility` bundle).
 - Nested `mobile/` is a separate git repo — do not commit it here.
-- No project-scoped MCP is required for this codebase.
+- Tests: `docker exec mood_dic-php-1 php bin/phpunit` (SQLite bootstrap in `tests/bootstrap.php`).
+- No project-scoped MCP required.
+- Full agent map: `AGENTS.md`.

@@ -10,6 +10,11 @@ alwaysApply: false
 - Serializer groups: `Symfony\Component\Serializer\Attribute\Groups`.
 - Login body: `{ "email", "password" }` → JWT in `data.jwt_token`.
 - Register body: `firstname`, `email`, `password`, `repeatPassword`, `acceptPrivacyPolicy`.
+- Mood aspects must match `MoodEntry::ASPECT_KEYS`; overall mood is `overallMood`, not an aspect key.
+- Repositories extend `App\Repository\AbstractRepository`; UUID comparisons use `IDENTITY(...)` + `UuidType` when needed.
+- `CustomJsonLoginAuthenticator` implements Symfony auth interfaces directly — do not extend final `JsonLoginAuthenticator`.
 - Keep Nelmio CORS; do not restore broken `.htaccess` OPTIONS redirects.
 - Avoid obsolete Doctrine config keys removed for SF8/DBAL4.
+- PHPUnit: self-contained SQLite via `tests/bootstrap.php`; use `TestDatabase` for schema reset.
+- Login throttling stays off in `APP_ENV=test`.
 - Run tests with `php bin/phpunit` inside `mood_dic-php-1`.

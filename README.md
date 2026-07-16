@@ -81,13 +81,17 @@ Base URL (dev): `http://localhost:8080`
 
 ### Mood domain
 
-Aspect keys: `mood`, `relationship`, `activity`, `environment`. Each aspect needs `score` (1–6) and optional `note`.
+- **Overall mood**: `overallMood` (1–6) + optional overall `note`
+- **Life aspects** (must match `MoodEntry::ASPECT_KEYS`):  
+  `close_relationships`, `romantic_relationships`, `duties`, `physical_health`, `finances`, `relaxation`, `growth_spirituality`, `environment`  
+  Each: `{ score: 1–6, note?: string|null }` (note min length **5** when required)
 
 | Method | Path | Notes |
 |--------|------|--------|
-| `POST` | `/mood` | Create check-in; returns `entry` + updated `stats` (XP / streak) |
+| `POST` | `/mood` | Create check-in; `Idempotency-Key` header; returns `entry` + `stats` |
 | `GET` | `/mood` | List entries (`limit`, `offset`) → `{ items, total }` |
 | `GET` | `/mood/stats` | Level, XP, streaks, `loggedToday`, 7d average, subscription flags |
+| `GET` | `/mood/checkin-hints` | Averages / `noticeableDrop` / note thresholds for the wizard |
 | `GET` | `/mood/{id}` | Single entry (UUID) |
 | `PATCH` | `/mood/{id}` | Update entry fields |
 | `DELETE` | `/mood/{id}` | Delete entry |
@@ -106,12 +110,13 @@ CORS allows browser origins on localhost and private LAN IPs so Expo web / LAN d
 docker exec mood_dic-php-1 php bin/phpunit
 ```
 
+PHPUnit uses a self-contained SQLite DB (`tests/bootstrap.php` → `var/test.db`) so the suite does not require the Docker Postgres instance.
+
 ## Known gaps
 
 - AI analysis / paid billing not implemented (`aiAnalysisUnlocked` is tier-gated only)
-- Password reset unfinished
+- Password reset routes exist but full product UX is unfinished
 - Translations endpoint may fail on bad YAML flatten
-- `CustomJsonLoginAuthenticator` extends a `final` Symfony class (deprecation)
 
 ## Agent / Cursor notes
 

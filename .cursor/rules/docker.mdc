@@ -1,0 +1,16 @@
+---
+description: Docker / Apache / PHP local stack conventions
+globs: docker/**/*,docker-compose.yaml
+alwaysApply: false
+---
+
+# Docker stack
+
+- Only publish Apache on host **8080**. Do not expose Mailhog / Adminer / RabbitMQ / Postgres / Redis on the host.
+- Apache config is intentionally minimal (`docker/apache/httpd.conf`) — DocumentRoot `public/public`, php-fpm via `proxy:fcgi://php-fpm:9000/`, reverse proxies for `/mailhog/`, `/adminer/`, `/rabbitmq/`.
+- Keep Apache `Timeout` / `ProxyTimeout` aligned with PHP `max_execution_time` (300s).
+- PHP image: `docker/php/Dockerfile` (8.5-FPM). Local overrides go in `docker/php/php.ini` → `conf.d/99-local.ini`.
+- Xdebug `client_host` is the compose gateway `172.255.0.1` (port 9003).
+- Prefer lean images: do not re-add unused packages (mariadb-client, cron, nano) without a concrete need.
+- Start with `UID=$(id -u) docker compose up -d --build`.
+- Verify after config changes: `httpd -t`, hit `:8080`, run PHPUnit in `mood_dic-php-1`.
