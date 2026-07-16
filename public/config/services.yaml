@@ -27,6 +27,10 @@ services:
         arguments:
             $moodCache: '@cache.mood'
 
+    App\Service\MoodAnalysisService:
+        arguments:
+            $moodCache: '@cache.mood'
+
     Predis\Client:
         arguments:
             - '%env(REDIS_URL)%'

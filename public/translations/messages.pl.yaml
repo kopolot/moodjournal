@@ -20,6 +20,10 @@ mood:
   updated: Wpis nastroju zaktualizowany.
   deleted: Wpis nastroju usunięty.
   not_found: Nie znaleziono wpisu nastroju.
+  analysis:
+    locked: Analiza AI nastroju wymaga MoodDic Plus lub Pro.
+  reports:
+    locked: Zaawansowane raporty wymagają MoodDic Pro.
   overall:
     required: Ocena ogólna jest wymagana.
   aspects:

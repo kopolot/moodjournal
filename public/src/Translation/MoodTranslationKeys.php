@@ -14,4 +14,6 @@ final class MoodTranslationKeys
     public const MOOD_SCORE_RANGE = 'mood.score.range';
     public const MOOD_NOTE_LENGTH = 'mood.note.length';
     public const MOOD_ASPECT_NOTE_REQUIRED = 'mood.aspect_note.required';
+    public const MOOD_ANALYSIS_LOCKED = 'mood.analysis.locked';
+    public const MOOD_REPORTS_LOCKED = 'mood.reports.locked';
 }

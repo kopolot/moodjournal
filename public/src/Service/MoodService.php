@@ -37,6 +37,7 @@ class MoodService
         private UserRepository $userRepository,
         private CacheInterface $moodCache,
         private EntityManagerInterface $em,
+        private MoodAnalysisService $moodAnalysisService,
     ) {
     }
 
@@ -142,7 +143,7 @@ class MoodService
         $xpTotal = $user->getXpTotal();
         $level = intdiv($xpTotal, self::XP_PER_LEVEL) + 1;
         $xpIntoLevel = $xpTotal % self::XP_PER_LEVEL;
-        $tier = SubscriptionTier::tryFrom($user->getSubscriptionTier()) ?? SubscriptionTier::Free;
+        $tier = SubscriptionTier::effectiveFor($user);
 
         return [
             'xpTotal' => $xpTotal,
@@ -158,6 +159,7 @@ class MoodService
             'subscriptionTier' => $tier->value,
             'subscriptionExpiresAt' => $user->getSubscriptionExpiresAt()?->format(DATE_ATOM),
             'aiAnalysisUnlocked' => $tier->unlocksAi(),
+            'advancedReportsUnlocked' => $tier->unlocksAdvancedReports(),
         ];
     }
 
@@ -214,6 +216,7 @@ class MoodService
     private function invalidateHintsCache(User $user): void
     {
         $this->moodCache->delete($this->hintsCacheKey($user));
+        $this->moodAnalysisService->invalidate($user);
     }
 
     private function hintsCacheKey(User $user): string
