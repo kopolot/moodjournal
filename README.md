@@ -93,6 +93,7 @@ Base URL (dev): `http://localhost:8080`
 | `GET` | `/mood/stats` | Level, XP, streaks, `loggedToday`, 7d average, subscription flags |
 | `GET` | `/mood/checkin-hints` | Averages / `noticeableDrop` / note thresholds for the wizard |
 | `GET` | `/mood/analysis` | Plus/Pro mood analysis + coaching (`?refresh=1` bypasses cache) |
+| `GET` | `/mood/reports/advanced` | Pro reports (`days=30\|90`): weekly series, aspects, distribution |
 | `GET` | `/mood/{id}` | Single entry (UUID) |
 | `PATCH` | `/mood/{id}` | Update entry fields |
 | `DELETE` | `/mood/{id}` | Delete entry |
@@ -115,8 +116,7 @@ PHPUnit uses a self-contained SQLite DB (`tests/bootstrap.php` → `var/test.db`
 
 ## Known gaps
 
-- Paid billing is still mock checkout (Stripe not wired)
-- Advanced Pro reports UI not shipped yet (`advancedReportsUnlocked` flag exists)
+- Paid billing is still mock checkout unless Stripe env vars are configured (see `cursor/stripe-billing`)
 - Password reset routes exist but full product UX is unfinished
 - Translations endpoint may fail on bad YAML flatten
 

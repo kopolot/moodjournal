@@ -7,6 +7,7 @@ use App\Entity\User;
 use App\Response\ApiResponse;
 use App\Service\IdempotencyService;
 use App\Service\MoodAnalysisService;
+use App\Service\MoodReportService;
 use App\Service\MoodService;
 use App\Translation\MoodTranslationKeys;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -24,6 +25,7 @@ final class MoodController extends AbstractController
     public function __construct(
         private MoodService $moodService,
         private MoodAnalysisService $moodAnalysisService,
+        private MoodReportService $moodReportService,
         private IdempotencyService $idempotencyService,
         private SerializerInterface&NormalizerInterface $serializer,
     ) {
@@ -124,6 +126,22 @@ final class MoodController extends AbstractController
             Response::HTTP_OK,
             '',
             $this->moodAnalysisService->analyze($user, $force)
+        );
+    }
+
+    #[Route('/reports/advanced', name: 'mood.reports.advanced', methods: ['GET'])]
+    public function advancedReports(
+        #[CurrentUser] User $user,
+        Request $request,
+    ): ApiResponse {
+        $days = (int) $request->query->get('days', 30);
+
+        return new ApiResponse(
+            '',
+            true,
+            Response::HTTP_OK,
+            '',
+            $this->moodReportService->advanced($user, $days)
         );
     }
 
