@@ -35,6 +35,8 @@ Console / tests / migrate:
 docker exec mood_dic-php-1 php bin/console …
 docker exec mood_dic-php-1 php bin/console doctrine:migrations:migrate --no-interaction
 docker exec mood_dic-php-1 php bin/phpunit
+# real Ollama (compose --profile llm must be up):
+docker exec mood_dic-php-1 composer test:local-llm
 ```
 
 Composer may be missing from PATH inside the image; use a host Composer against `public/` or `php composer.phar` if present.

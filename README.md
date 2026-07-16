@@ -203,6 +203,21 @@ docker exec mood_dic-php-1 php bin/phpunit
 
 PHPUnit uses a self-contained SQLite DB (`tests/bootstrap.php` → `var/test.db`) so the suite does not require the Docker Postgres instance.
 
+### Local LLM integration (real Ollama)
+
+Default suite **excludes** live Ollama tests. With compose profile `llm` running:
+
+```bash
+UID=$(id -u) docker compose --profile llm up -d
+# wait for ollama-init to finish pulling the model
+
+docker exec mood_dic-php-1 composer test:local-llm
+# or: docker exec mood_dic-php-1 php bin/phpunit tests/Integration/LocalLlm
+```
+
+This hits `GET /mood/analysis` end-to-end against real Ollama and asserts `engine=pattern+llm` plus a non-empty `narrative`.  
+Skipped automatically if Ollama/model is unavailable. Not part of the default suite.
+
 ## Known gaps
 
 - Stripe billing: set `STRIPE_*` env vars to enable Checkout + webhooks; empty keys keep mock checkout

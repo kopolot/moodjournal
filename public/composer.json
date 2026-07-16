@@ -75,6 +75,8 @@
             "cache:clear": "symfony-cmd",
             "assets:install %PUBLIC_DIR%": "symfony-cmd"
         },
+        "test": "php bin/phpunit",
+        "test:local-llm": "php bin/phpunit tests/Integration/LocalLlm",
         "post-install-cmd": [
             "@auto-scripts"
         ],
