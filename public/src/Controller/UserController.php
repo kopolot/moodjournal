@@ -8,6 +8,7 @@ use App\Response\ApiResponse;
 use App\Service\UserService;
 use App\Translation\UserTranslationKeys;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\Attribute\MapRequestPayload;
@@ -45,12 +46,13 @@ final class UserController extends AbstractController
     }
 
     #[Route('/checkloggedinuser', methods: ['GET'], condition: "'dev' === '%kernel.environment%'")]
-    public function check(#[CurrentUser] ?User $user)
+    public function check(#[CurrentUser] ?User $user): JsonResponse
     {
-        var_dump($user);
-        die;
-
-        return new Response();
+        return new JsonResponse([
+            'logged_in' => $user !== null,
+            'user_id' => $user?->getId()?->toRfc4122(),
+            'email' => $user?->getEmail(),
+        ]);
     }
 
     #[Route('/get', methods: ['GET'])]

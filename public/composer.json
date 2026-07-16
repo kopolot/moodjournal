@@ -50,8 +50,7 @@
     },
     "autoload": {
         "psr-4": {
-            "App\\": "src/",
-            "Kopolot\\Utility\\": "bundles/kopolot/utility/src/"
+            "App\\": "src/"
         }
     },
     "autoload-dev": {

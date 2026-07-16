@@ -1,11 +1,11 @@
 <?php
 
-namespace Kopolot\Utility\Repository;
+namespace App\Repository;
 
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 
-abstract class AbstractRepository extends ServiceEntityRepository{
-
+abstract class AbstractRepository extends ServiceEntityRepository
+{
     public function save(object $entity): void
     {
         $this->validateEntityType($entity);

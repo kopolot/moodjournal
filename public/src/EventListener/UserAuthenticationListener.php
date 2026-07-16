@@ -16,7 +16,7 @@ use Symfony\Component\HttpKernel\Exception\UnauthorizedHttpException;
 use Lexik\Bundle\JWTAuthenticationBundle\Event\AuthenticationFailureEvent;
 use Lexik\Bundle\JWTAuthenticationBundle\Event\AuthenticationSuccessEvent;
 
-final class UserAuthentiactionListener{
+final class UserAuthenticationListener{
 
     public function __construct(
         private UserRepository $userRepository,

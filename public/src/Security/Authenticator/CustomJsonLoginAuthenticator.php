@@ -3,27 +3,33 @@
 namespace App\Security\Authenticator;
 
 use App\Translation\UserTranslationKeys;
+use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
-use Symfony\Component\Security\Http\HttpUtils;
-use Symfony\Component\PropertyAccess\PropertyAccess;
-use Symfony\Contracts\Translation\TranslatorInterface;
-use Symfony\Component\DependencyInjection\Attribute\AsAlias;
-use Symfony\Component\PropertyAccess\Exception\AccessException;
-use Symfony\Component\PropertyAccess\PropertyAccessorInterface;
-use Symfony\Component\Security\Core\User\UserProviderInterface;
+use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
+use Symfony\Component\PropertyAccess\Exception\AccessException;
+use Symfony\Component\PropertyAccess\PropertyAccess;
+use Symfony\Component\PropertyAccess\PropertyAccessorInterface;
+use Symfony\Component\Security\Core\Authentication\Token\TokenInterface;
+use Symfony\Component\Security\Core\Authentication\Token\UsernamePasswordToken;
+use Symfony\Component\Security\Core\Exception\AuthenticationException;
 use Symfony\Component\Security\Core\User\PasswordUpgraderInterface;
-use Symfony\Component\Security\Http\Authenticator\Passport\Passport;
-use Symfony\Component\Security\Http\Authenticator\JsonLoginAuthenticator;
-use Symfony\Component\Security\Http\Authenticator\Passport\Badge\UserBadge;
-use Symfony\Component\Security\Http\Authenticator\Passport\Badge\RememberMeBadge;
-use Symfony\Component\Security\Http\Authenticator\Passport\Badge\PasswordUpgradeBadge;
+use Symfony\Component\Security\Core\User\UserProviderInterface;
 use Symfony\Component\Security\Http\Authentication\AuthenticationFailureHandlerInterface;
 use Symfony\Component\Security\Http\Authentication\AuthenticationSuccessHandlerInterface;
+use Symfony\Component\Security\Http\Authenticator\InteractiveAuthenticatorInterface;
+use Symfony\Component\Security\Http\Authenticator\Passport\Badge\PasswordUpgradeBadge;
+use Symfony\Component\Security\Http\Authenticator\Passport\Badge\RememberMeBadge;
+use Symfony\Component\Security\Http\Authenticator\Passport\Badge\UserBadge;
 use Symfony\Component\Security\Http\Authenticator\Passport\Credentials\PasswordCredentials;
+use Symfony\Component\Security\Http\Authenticator\Passport\Passport;
+use Symfony\Component\Security\Http\HttpUtils;
+use Symfony\Contracts\Translation\TranslatorInterface;
 
-#[AsAlias('security.authenticator.json_login.not_logged_in')]
-class CustomJsonLoginAuthenticator extends JsonLoginAuthenticator
+/**
+ * JSON login with app-specific validation messages instead of extending Symfony's final JsonLoginAuthenticator.
+ */
+class CustomJsonLoginAuthenticator implements InteractiveAuthenticatorInterface
 {
     private array $options;
     private PropertyAccessorInterface $propertyAccessor;
@@ -37,10 +43,24 @@ class CustomJsonLoginAuthenticator extends JsonLoginAuthenticator
         array $options = [],
         ?PropertyAccessorInterface $propertyAccessor = null,
     ) {
-        // Call the parent constructor
-        parent::__construct($httpUtils, $userProvider, $successHandler, $failureHandler, $options, $propertyAccessor);
         $this->options = array_merge(['username_path' => 'username', 'password_path' => 'password'], $options);
         $this->propertyAccessor = $propertyAccessor ?: PropertyAccess::createPropertyAccessor();
+    }
+
+    public function supports(Request $request): ?bool
+    {
+        if (
+            !str_contains($request->getRequestFormat() ?? '', 'json')
+            && !str_contains($request->getContentTypeFormat() ?? '', 'json')
+        ) {
+            return false;
+        }
+
+        if (isset($this->options['check_path']) && !$this->httpUtils->checkRequestPath($request, $this->options['check_path'])) {
+            return false;
+        }
+
+        return true;
     }
 
     public function authenticate(Request $request): Passport
@@ -68,7 +88,48 @@ class CustomJsonLoginAuthenticator extends JsonLoginAuthenticator
         return $passport;
     }
 
+    public function createToken(Passport $passport, string $firewallName): TokenInterface
+    {
+        return new UsernamePasswordToken($passport->getUser(), $firewallName, $passport->getUser()->getRoles());
+    }
 
+    public function onAuthenticationSuccess(Request $request, TokenInterface $token, string $firewallName): ?Response
+    {
+        if (null === $this->successHandler) {
+            return null;
+        }
+
+        return $this->successHandler->onAuthenticationSuccess($request, $token);
+    }
+
+    public function onAuthenticationFailure(Request $request, AuthenticationException $exception): ?Response
+    {
+        if (null === $this->failureHandler) {
+            if (null !== $this->translator) {
+                $errorMessage = $this->translator->trans($exception->getMessageKey(), $exception->getMessageData(), 'security');
+            } else {
+                $errorMessage = strtr($exception->getMessageKey(), $exception->getMessageData());
+            }
+
+            return new JsonResponse(['error' => $errorMessage], JsonResponse::HTTP_UNAUTHORIZED);
+        }
+
+        return $this->failureHandler->onAuthenticationFailure($request, $exception);
+    }
+
+    public function isInteractive(): bool
+    {
+        return true;
+    }
+
+    public function setTranslator(TranslatorInterface $translator): void
+    {
+        $this->translator = $translator;
+    }
+
+    /**
+     * @return array{username: string, password: string}
+     */
     private function getCredentials(\stdClass $data): array
     {
         $credentials = [];
@@ -76,10 +137,10 @@ class CustomJsonLoginAuthenticator extends JsonLoginAuthenticator
             $credentials['username'] = $this->propertyAccessor->getValue($data, $this->options['username_path']);
 
             if (!\is_string($credentials['username']) || '' === $credentials['username']) {
-                throw new BadRequestHttpException( UserTranslationKeys::USER_LOGIN_FAILED);
+                throw new BadRequestHttpException(UserTranslationKeys::USER_LOGIN_FAILED);
             }
         } catch (AccessException $e) {
-            throw new BadRequestHttpException( UserTranslationKeys::USER_LOGIN_FAILED, $e);
+            throw new BadRequestHttpException(UserTranslationKeys::USER_LOGIN_FAILED, $e);
         }
 
         try {
@@ -87,10 +148,10 @@ class CustomJsonLoginAuthenticator extends JsonLoginAuthenticator
             $this->propertyAccessor->setValue($data, $this->options['password_path'], null);
 
             if (!\is_string($credentials['password']) || '' === $credentials['password']) {
-                throw new BadRequestHttpException( UserTranslationKeys::USER_LOGIN_FAILED);
+                throw new BadRequestHttpException(UserTranslationKeys::USER_LOGIN_FAILED);
             }
         } catch (AccessException $e) {
-            throw new BadRequestHttpException( UserTranslationKeys::USER_LOGIN_FAILED, $e);
+            throw new BadRequestHttpException(UserTranslationKeys::USER_LOGIN_FAILED, $e);
         }
 
         return $credentials;

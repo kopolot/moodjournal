@@ -47,7 +47,7 @@ class UserService
         }
 
         $user = new User();
-        $user->setFirstName((string) $userDto->firstname);
+        $user->setFirstname((string) $userDto->firstname);
         $user->setEmail((string) $userDto->email);
         $user->setPassword($this->passwordHasher->hashPassword($user, (string) $userDto->password));
         $user->setRoles(['ROLE_USER']);
@@ -164,19 +164,20 @@ class UserService
         if (!$user->getId()) {
             throw new NotFoundHttpException(UserTranslationKeys::USER_NOT_FOUND);
         }
-        $this->userRepository->delete($user);
+
         $this->sendEmailToUser(
             $user,
             UserTranslationKeys::USER_EMAIL_ACCOUNT_DELETED_SUBJECT,
             'Your account has been deleted. Placeholder for HTML content.',
             'Your account has been deleted. Placeholder for text content.'
         );
+        $this->userRepository->delete($user);
     }
 
     public function editUser(User $user, UserDto $userDto): void
     {
         if ($userDto->firstname !== null) {
-            $user->setFirstName($userDto->firstname);
+            $user->setFirstname($userDto->firstname);
         }
         if ($userDto->preferences !== null) {
             $user->setPreferences($this->mergePreferences($user, $userDto->preferences));
