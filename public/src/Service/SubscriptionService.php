@@ -104,25 +104,14 @@ class SubscriptionService
      */
     public function current(User $user): array
     {
-<<<<<<< HEAD
         $tier = SubscriptionTier::effectiveFor($user);
-=======
-        $tier = SubscriptionTier::tryFrom($user->getSubscriptionTier()) ?? SubscriptionTier::Free;
-        $expiresAt = $user->getSubscriptionExpiresAt();
-        if ($tier !== SubscriptionTier::Free && $expiresAt !== null && $expiresAt < new \DateTimeImmutable('now')) {
-            $tier = SubscriptionTier::Free;
-        }
->>>>>>> 4fd07e2 (feat(billing): add Stripe Checkout subscriptions with webhook renewals)
 
         return [
             'tier' => $tier->value,
-            'expiresAt' => $expiresAt?->format(DATE_ATOM),
+            'expiresAt' => $user->getSubscriptionExpiresAt()?->format(DATE_ATOM),
             'aiAnalysisUnlocked' => $tier->unlocksAi(),
-<<<<<<< HEAD
             'advancedReportsUnlocked' => $tier->unlocksAdvancedReports(),
-=======
             'billingProvider' => $this->billingProvider(),
->>>>>>> 4fd07e2 (feat(billing): add Stripe Checkout subscriptions with webhook renewals)
             'plans' => SubscriptionTier::catalog(),
         ];
     }

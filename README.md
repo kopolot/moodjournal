@@ -128,12 +128,7 @@ PHPUnit uses a self-contained SQLite DB (`tests/bootstrap.php` → `var/test.db`
 
 ## Known gaps
 
-<<<<<<< HEAD
-- Paid billing is still mock checkout unless Stripe env vars are configured (see `cursor/stripe-billing`)
-=======
-- AI analysis still teaser-only on `main` (see `cursor/ai-mood-analysis`)
 - Stripe billing: set `STRIPE_*` env vars to enable Checkout + webhooks; empty keys keep mock checkout
->>>>>>> 4fd07e2 (feat(billing): add Stripe Checkout subscriptions with webhook renewals)
 - Password reset routes exist but full product UX is unfinished
 - Translations endpoint may fail on bad YAML flatten
 
