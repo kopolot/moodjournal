@@ -17,6 +17,7 @@
         "phpdocumentor/reflection-docblock": "^5.6.7",
         "phpstan/phpdoc-parser": "^2.3.3",
         "predis/predis": "*",
+        "stripe/stripe-php": "^21.0",
         "symfony/amqp-messenger": "8.1.*",
         "symfony/console": "8.1.*",
         "symfony/dotenv": "8.1.*",

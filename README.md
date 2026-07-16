@@ -79,6 +79,18 @@ Base URL (dev): `http://localhost:8080`
 | `POST` | `/user/resetpassword` | Incomplete |
 | `GET` | `/translations/{locale}` | Locale catalog (known bugs possible) |
 
+### Subscription
+
+| Method | Path | Notes |
+|--------|------|--------|
+| `GET` | `/subscription/plans` | Public catalog + `billingProvider` (`stripe` \| `mock`) |
+| `GET` | `/subscription/current` | Auth; current tier + flags |
+| `POST` | `/subscription/checkout` | Auth; Stripe → `{ checkoutUrl }` or mock card charge |
+| `POST` | `/subscription/cancel` | Auth; mock downgrades now, Stripe cancels at period end |
+| `POST` | `/subscription/webhook` | Public Stripe webhook (`Stripe-Signature`) |
+
+Configure `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`, `STRIPE_PRICE_PLUS`, `STRIPE_PRICE_PRO` to enable Stripe. Empty keys keep the demo mock checkout.
+
 ### Mood domain
 
 - **Overall mood**: `overallMood` (1–6) + optional overall `note`
@@ -116,7 +128,12 @@ PHPUnit uses a self-contained SQLite DB (`tests/bootstrap.php` → `var/test.db`
 
 ## Known gaps
 
+<<<<<<< HEAD
 - Paid billing is still mock checkout unless Stripe env vars are configured (see `cursor/stripe-billing`)
+=======
+- AI analysis still teaser-only on `main` (see `cursor/ai-mood-analysis`)
+- Stripe billing: set `STRIPE_*` env vars to enable Checkout + webhooks; empty keys keep mock checkout
+>>>>>>> 4fd07e2 (feat(billing): add Stripe Checkout subscriptions with webhook renewals)
 - Password reset routes exist but full product UX is unfinished
 - Translations endpoint may fail on bad YAML flatten
 

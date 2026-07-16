@@ -2,11 +2,21 @@ subscription:
   payment:
     success: 'Płatność przyjęta. Witaj w MoodDic Plus/Pro!'
     declined: 'Karta odrzucona. Spróbuj innej (demo: unikaj numerów kończących się na 0000).'
+  checkout:
+    created: 'Utworzono sesję Stripe Checkout.'
+    urls_invalid: 'successUrl i cancelUrl muszą być poprawnymi URL-ami.'
   canceled: 'Subskrypcja anulowana. Wracasz na Free.'
   tier:
     invalid: Nieprawidłowy poziom subskrypcji.
   card:
     invalid: Numer karty wygląda na nieprawidłowy.
+    name_required: Imię na karcie jest wymagane.
+  stripe:
+    disabled: Stripe billing nie jest skonfigurowany.
+    session_failed: Nie udało się utworzyć sesji Stripe Checkout.
+    webhook_unconfigured: Brak sekretu webhooka Stripe.
+    signature_missing: Brak nagłówka Stripe-Signature.
+    signature_invalid: Nieprawidłowy podpis webhooka Stripe.
 
 idempotency:
   key:

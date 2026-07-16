@@ -114,6 +114,12 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[Groups('user:read')]
     private ?\DateTimeImmutable $subscriptionExpiresAt = null;
 
+    #[ORM\Column(length: 64, nullable: true)]
+    private ?string $stripeCustomerId = null;
+
+    #[ORM\Column(length: 64, nullable: true)]
+    private ?string $stripeSubscriptionId = null;
+
     public function getId(): ?Uuid
     {
         return $this->id;
@@ -367,6 +373,30 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     public function setSubscriptionExpiresAt(?\DateTimeImmutable $subscriptionExpiresAt): static
     {
         $this->subscriptionExpiresAt = $subscriptionExpiresAt;
+
+        return $this;
+    }
+
+    public function getStripeCustomerId(): ?string
+    {
+        return $this->stripeCustomerId;
+    }
+
+    public function setStripeCustomerId(?string $stripeCustomerId): static
+    {
+        $this->stripeCustomerId = $stripeCustomerId;
+
+        return $this;
+    }
+
+    public function getStripeSubscriptionId(): ?string
+    {
+        return $this->stripeSubscriptionId;
+    }
+
+    public function setStripeSubscriptionId(?string $stripeSubscriptionId): static
+    {
+        $this->stripeSubscriptionId = $stripeSubscriptionId;
 
         return $this;
     }
