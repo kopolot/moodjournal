@@ -119,13 +119,18 @@ final class MoodController extends AbstractController
         Request $request,
     ): ApiResponse {
         $force = filter_var($request->query->get('refresh', false), FILTER_VALIDATE_BOOL);
+        $lang = $request->query->get('lang');
 
         return new ApiResponse(
             '',
             true,
             Response::HTTP_OK,
             '',
-            $this->moodAnalysisService->analyze($user, $force)
+            $this->moodAnalysisService->analyze(
+                $user,
+                $force,
+                is_string($lang) ? $lang : null,
+            )
         );
     }
 

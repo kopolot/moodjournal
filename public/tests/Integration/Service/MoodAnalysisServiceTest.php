@@ -72,8 +72,79 @@ final class MoodAnalysisServiceTest extends KernelTestCase
         $analysis = $service->analyze($user, true);
 
         $this->assertSame('pattern+llm', $analysis['engine']);
+        $this->assertSame('en', $analysis['locale']);
         $this->assertSame('Steady climb', $analysis['narrative']['headline']);
         $this->assertCount(2, $analysis['narrative']['tips']);
+    }
+
+    public function testAnalyzePassesPolishLanguageInstructionToLlm(): void
+    {
+        $user = $this->createUser('plus');
+        $user->setPreferences(['language' => 'pl_PL']);
+        $this->em->flush();
+        $this->seedEntries($user, [3, 4, 5]);
+
+        /** @var OpenAiCompatibleClient&MockObject $llm */
+        $llm = $this->createMock(OpenAiCompatibleClient::class);
+        $llm->method('isEnabled')->willReturn(true);
+        $llm->expects($this->once())
+            ->method('chatJson')
+            ->with($this->callback(static function (array $messages): bool {
+                $system = $messages[0]['content'] ?? '';
+                $user = $messages[1]['content'] ?? '';
+
+                return str_contains($system, 'Polish')
+                    && str_contains($user, '"locale":"pl"');
+            }))
+            ->willReturn([
+                'headline' => 'Stabilny nastrój',
+                'detail' => 'Masz przestrzeń do wzrostu w kilku obszarach.',
+                'tips' => ['Zadbaj o finanse.', 'Buduj serię nawyków.'],
+            ]);
+
+        $service = new MoodAnalysisService(
+            static::getContainer()->get(\App\Repository\MoodEntryRepository::class),
+            static::getContainer()->get('cache.mood'),
+            $llm,
+        );
+
+        $analysis = $service->analyze($user, true, 'pl');
+
+        $this->assertSame('pl', $analysis['locale']);
+        $this->assertSame('Stabilny nastrój', $analysis['narrative']['headline']);
+    }
+
+    public function testForceRefreshIncludesFreshnessTokenInLlmPayload(): void
+    {
+        $user = $this->createUser('plus');
+        $this->seedEntries($user, [3, 4, 5]);
+
+        /** @var OpenAiCompatibleClient&MockObject $llm */
+        $llm = $this->createMock(OpenAiCompatibleClient::class);
+        $llm->method('isEnabled')->willReturn(true);
+        $llm->expects($this->once())
+            ->method('chatJson')
+            ->with($this->callback(static function (array $messages): bool {
+                $system = $messages[0]['content'] ?? '';
+                $user = $messages[1]['content'] ?? '';
+
+                return str_contains($system, 'refresh request')
+                    && str_contains($user, 'freshnessToken');
+            }))
+            ->willReturn([
+                'headline' => 'Fresh take',
+                'detail' => 'Refreshed narrative.',
+                'tips' => ['Tip one'],
+            ]);
+
+        $service = new MoodAnalysisService(
+            static::getContainer()->get(\App\Repository\MoodEntryRepository::class),
+            static::getContainer()->get('cache.mood'),
+            $llm,
+        );
+
+        $analysis = $service->analyze($user, true, 'en');
+        $this->assertSame('Fresh take', $analysis['narrative']['headline']);
     }
 
     /**

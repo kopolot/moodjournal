@@ -10,6 +10,8 @@ use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
+use Spatie\Async\Pool;
+use GuzzleHttp\Client as GuzzleClient;
 
 /**
  * Real end-to-end check against local Ollama (compose profile `llm`).
@@ -76,7 +78,7 @@ final class MoodAnalysisLocalLlmTest extends WebTestCase
             $this->assertResponseStatusCodeSame(Response::HTTP_CREATED);
         }
 
-        $client->request('GET', '/mood/analysis?refresh=1');
+        $client->request('GET', '/mood/analysis?refresh=1&lang=pl');
         $this->assertResponseStatusCodeSame(Response::HTTP_OK);
 
         $payload = json_decode($client->getResponse()->getContent(), true);
@@ -84,6 +86,7 @@ final class MoodAnalysisLocalLlmTest extends WebTestCase
         $data = $payload['data'] ?? [];
 
         $this->assertTrue($data['ready'] ?? false);
+        $this->assertSame('pl', $data['locale'] ?? null);
         $this->assertSame('pattern+llm', $data['engine'] ?? null, 'Expected real local LLM enrichment, got: ' . json_encode($data));
         $this->assertGreaterThanOrEqual(3, $data['entryCount'] ?? 0);
         $this->assertIsArray($data['narrative'] ?? null);
@@ -92,6 +95,19 @@ final class MoodAnalysisLocalLlmTest extends WebTestCase
         $this->assertIsArray($data['narrative']['tips'] ?? null);
         $this->assertNotEmpty($data['narrative']['tips']);
         $this->assertNotEmpty($data['coachingTips'] ?? []);
+
+        $blob = strtolower(
+            ($data['narrative']['headline'] ?? '')
+            . ' '
+            . ($data['narrative']['detail'] ?? '')
+            . ' '
+            . implode(' ', $data['narrative']['tips'] ?? [])
+        );
+        $this->assertMatchesRegularExpression(
+            '/[ąćęłńóśźż]|stabil|nastro|obszar|nawyk|fokus|finanse|otoczen/u',
+            $blob,
+            'Expected Polish narrative cues, got: ' . $blob
+        );
     }
 
     /**
