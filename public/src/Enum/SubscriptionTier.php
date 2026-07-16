@@ -13,6 +13,29 @@ enum SubscriptionTier: string
         return $this === self::Plus || $this === self::Pro;
     }
 
+    public function unlocksAdvancedReports(): bool
+    {
+        return $this === self::Pro;
+    }
+
+    /**
+     * Active paid tier considering expiry; expired paid plans fall back to Free.
+     */
+    public static function effectiveFor(\App\Entity\User $user): self
+    {
+        $tier = self::tryFrom($user->getSubscriptionTier()) ?? self::Free;
+        if ($tier === self::Free) {
+            return self::Free;
+        }
+
+        $expiresAt = $user->getSubscriptionExpiresAt();
+        if ($expiresAt !== null && $expiresAt < new \DateTimeImmutable('now')) {
+            return self::Free;
+        }
+
+        return $tier;
+    }
+
     /**
      * @return list<array<string, mixed>>
      */

@@ -172,6 +172,64 @@ final class MoodControllerTest extends WebTestCase
         $this->assertResponseStatusCodeSame(Response::HTTP_UNAUTHORIZED);
     }
 
+    public function testAnalysisRequiresPlusOrPro(): void
+    {
+        $client = static::createClient();
+        $token = $this->createAuthenticatedUserAndLogin($client, 'mood-ai-locked');
+
+        $client->setServerParameter('HTTP_AUTHORIZATION', 'Bearer ' . $token);
+        $client->request('GET', '/mood/analysis');
+        $this->assertResponseStatusCodeSame(Response::HTTP_FORBIDDEN);
+    }
+
+    public function testAnalysisReturnsInsightsForPlusUser(): void
+    {
+        $client = static::createClient();
+        $email = sprintf('mood-ai.%s@example.com', uniqid());
+        $password = 'Test1234!';
+        $this->createUser($email, $password, subscriptionTier: 'plus');
+
+        $client->request(
+            'POST',
+            '/user/login',
+            [],
+            [],
+            ['CONTENT_TYPE' => 'application/json'],
+            json_encode(['email' => $email, 'password' => $password])
+        );
+        $loginData = json_decode($client->getResponse()->getContent(), true);
+        $token = $loginData['data']['jwt_token'];
+        $client->setServerParameter('HTTP_AUTHORIZATION', 'Bearer ' . $token);
+
+        for ($i = 0; $i < 3; ++$i) {
+            $client->request(
+                'POST',
+                '/mood',
+                [],
+                [],
+                ['CONTENT_TYPE' => 'application/json'],
+                json_encode([
+                    'overallMood' => 3 + $i,
+                    'note' => 'Analysis sample note number ' . $i,
+                    'aspects' => $this->buildAspectPayload(score: 3 + ($i % 2)),
+                ])
+            );
+            $this->assertResponseStatusCodeSame(Response::HTTP_CREATED);
+        }
+
+        $client->request('GET', '/mood/analysis');
+        $this->assertResponseStatusCodeSame(Response::HTTP_OK);
+        $data = json_decode($client->getResponse()->getContent(), true);
+
+        $this->assertTrue($data['success']);
+        $this->assertTrue($data['data']['ready']);
+        $this->assertTrue($data['data']['unlocked']);
+        $this->assertSame('pattern', $data['data']['engine']);
+        $this->assertGreaterThanOrEqual(3, $data['data']['entryCount']);
+        $this->assertNotEmpty($data['data']['coachingTips']);
+        $this->assertArrayHasKey('aspectInsights', $data['data']);
+    }
+
     /**
      * @return array<string, array{score: int, note: string}>
      */
@@ -211,7 +269,7 @@ final class MoodControllerTest extends WebTestCase
         return $loginData['data']['jwt_token'];
     }
 
-    private function createUser(string $email, string $password): void
+    private function createUser(string $email, string $password, string $subscriptionTier = 'free'): void
     {
         /** @var EntityManagerInterface $entityManager */
         $entityManager = static::getContainer()->get(EntityManagerInterface::class);
@@ -225,7 +283,12 @@ final class MoodControllerTest extends WebTestCase
             ->setPassword($passwordHasher->hashPassword($user, $password))
             ->setRoles(['ROLE_USER'])
             ->setIsVerified(true)
-            ->setIsActive(true);
+            ->setIsActive(true)
+            ->setSubscriptionTier($subscriptionTier);
+
+        if ($subscriptionTier !== 'free') {
+            $user->setSubscriptionExpiresAt((new \DateTimeImmutable('now'))->modify('+30 days'));
+        }
 
         $entityManager->persist($user);
         $entityManager->flush();

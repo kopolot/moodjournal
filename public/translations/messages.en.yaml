@@ -26,6 +26,10 @@ mood:
   updated: Mood entry updated.
   deleted: Mood entry deleted.
   not_found: Mood entry not found.
+  analysis:
+    locked: AI mood analysis requires MoodDic Plus or Pro.
+  reports:
+    locked: Advanced reports require MoodDic Pro.
   overall:
     required: Overall mood is required.
   aspects:

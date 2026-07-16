@@ -95,7 +95,8 @@ Security: `/mood*` requires `IS_AUTHENTICATED_FULLY` (`public/config/packages/se
 
 ## What not to build unless asked
 
-- Stripe / real subscription billing, AI analysis pipelines, large unrelated refactors
+- Stripe / real subscription billing (unless explicitly requested), large unrelated refactors
+- External LLM providers for mood analysis unless asked (current engine is pattern-based in `MoodAnalysisService`)
 - Completing password-reset UX end-to-end (routes exist; treat as incomplete unless requested)
 - Reintroducing a utility/vendor bundle for `AbstractRepository`
 - MCP servers for this repo (none required; use user-level Cursor MCP if needed)

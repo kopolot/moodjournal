@@ -92,6 +92,7 @@ Base URL (dev): `http://localhost:8080`
 | `GET` | `/mood` | List entries (`limit`, `offset`) → `{ items, total }` |
 | `GET` | `/mood/stats` | Level, XP, streaks, `loggedToday`, 7d average, subscription flags |
 | `GET` | `/mood/checkin-hints` | Averages / `noticeableDrop` / note thresholds for the wizard |
+| `GET` | `/mood/analysis` | Plus/Pro mood analysis + coaching (`?refresh=1` bypasses cache) |
 | `GET` | `/mood/{id}` | Single entry (UUID) |
 | `PATCH` | `/mood/{id}` | Update entry fields |
 | `DELETE` | `/mood/{id}` | Delete entry |
@@ -114,7 +115,8 @@ PHPUnit uses a self-contained SQLite DB (`tests/bootstrap.php` → `var/test.db`
 
 ## Known gaps
 
-- AI analysis / paid billing not implemented (`aiAnalysisUnlocked` is tier-gated only)
+- Paid billing is still mock checkout (Stripe not wired)
+- Advanced Pro reports UI not shipped yet (`advancedReportsUnlocked` flag exists)
 - Password reset routes exist but full product UX is unfinished
 - Translations endpoint may fail on bad YAML flatten
 

@@ -74,12 +74,13 @@ class SubscriptionService
      */
     public function current(User $user): array
     {
-        $tier = SubscriptionTier::tryFrom($user->getSubscriptionTier()) ?? SubscriptionTier::Free;
+        $tier = SubscriptionTier::effectiveFor($user);
 
         return [
             'tier' => $tier->value,
             'expiresAt' => $user->getSubscriptionExpiresAt()?->format(DATE_ATOM),
             'aiAnalysisUnlocked' => $tier->unlocksAi(),
+            'advancedReportsUnlocked' => $tier->unlocksAdvancedReports(),
             'plans' => SubscriptionTier::catalog(),
         ];
     }

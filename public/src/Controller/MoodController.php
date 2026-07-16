@@ -6,6 +6,7 @@ use App\Dto\MoodEntryDto;
 use App\Entity\User;
 use App\Response\ApiResponse;
 use App\Service\IdempotencyService;
+use App\Service\MoodAnalysisService;
 use App\Service\MoodService;
 use App\Translation\MoodTranslationKeys;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -22,6 +23,7 @@ final class MoodController extends AbstractController
 {
     public function __construct(
         private MoodService $moodService,
+        private MoodAnalysisService $moodAnalysisService,
         private IdempotencyService $idempotencyService,
         private SerializerInterface&NormalizerInterface $serializer,
     ) {
@@ -106,6 +108,22 @@ final class MoodController extends AbstractController
             Response::HTTP_OK,
             '',
             $this->moodService->checkinHints($user)
+        );
+    }
+
+    #[Route('/analysis', name: 'mood.analysis', methods: ['GET'])]
+    public function analysis(
+        #[CurrentUser] User $user,
+        Request $request,
+    ): ApiResponse {
+        $force = filter_var($request->query->get('refresh', false), FILTER_VALIDATE_BOOL);
+
+        return new ApiResponse(
+            '',
+            true,
+            Response::HTTP_OK,
+            '',
+            $this->moodAnalysisService->analyze($user, $force)
         );
     }
 
