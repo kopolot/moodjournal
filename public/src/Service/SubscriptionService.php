@@ -17,12 +17,16 @@ class SubscriptionService
     public function __construct(
         private UserRepository $userRepository,
         private EntityManagerInterface $em,
+        private StripeBillingService $stripeBillingService,
     ) {
     }
 
+    public function billingProvider(): string
+    {
+        return $this->stripeBillingService->isEnabled() ? 'stripe' : 'mock';
+    }
+
     /**
-     * Fake payment processor — validates card shape and "charges" successfully.
-     *
      * @return array<string, mixed>
      */
     public function checkout(User $user, SubscriptionCheckoutDto $dto): array
@@ -32,13 +36,38 @@ class SubscriptionService
             throw new BadRequestHttpException('subscription.tier.invalid');
         }
 
-        $digits = preg_replace('/\D+/', '', $dto->cardNumber) ?? '';
+        if ($this->stripeBillingService->isEnabled()) {
+            if ($dto->successUrl === null || $dto->cancelUrl === null) {
+                throw new BadRequestHttpException('subscription.checkout.urls_invalid');
+            }
+
+            return $this->stripeBillingService->createCheckoutSession(
+                $user,
+                $tier,
+                $dto->successUrl,
+                $dto->cancelUrl,
+            );
+        }
+
+        return $this->mockCheckout($user, $tier, $dto);
+    }
+
+    /**
+     * Fake payment processor — used when Stripe keys are not configured.
+     *
+     * @return array<string, mixed>
+     */
+    private function mockCheckout(User $user, SubscriptionTier $tier, SubscriptionCheckoutDto $dto): array
+    {
+        $digits = preg_replace('/\D+/', '', (string) $dto->cardNumber) ?? '';
         if (strlen($digits) < 13 || strlen($digits) > 19) {
             throw new UnprocessableEntityHttpException('subscription.card.invalid');
         }
-        // Demo decline: cards ending with 0000
         if (str_ends_with($digits, '0000')) {
             throw new UnprocessableEntityHttpException('subscription.payment.declined');
+        }
+        if ($dto->cardholderName === null || trim($dto->cardholderName) === '') {
+            throw new UnprocessableEntityHttpException('subscription.card.name_required');
         }
 
         return $this->em->wrapInTransaction(function () use ($user, $tier, $digits, $dto): array {
@@ -54,6 +83,7 @@ class SubscriptionService
             $this->em->flush();
 
             return [
+                'provider' => 'mock',
                 'paymentId' => 'pay_demo_' . bin2hex(random_bytes(8)),
                 'status' => 'succeeded',
                 'tier' => $tier->value,
@@ -74,13 +104,25 @@ class SubscriptionService
      */
     public function current(User $user): array
     {
+<<<<<<< HEAD
         $tier = SubscriptionTier::effectiveFor($user);
+=======
+        $tier = SubscriptionTier::tryFrom($user->getSubscriptionTier()) ?? SubscriptionTier::Free;
+        $expiresAt = $user->getSubscriptionExpiresAt();
+        if ($tier !== SubscriptionTier::Free && $expiresAt !== null && $expiresAt < new \DateTimeImmutable('now')) {
+            $tier = SubscriptionTier::Free;
+        }
+>>>>>>> 4fd07e2 (feat(billing): add Stripe Checkout subscriptions with webhook renewals)
 
         return [
             'tier' => $tier->value,
-            'expiresAt' => $user->getSubscriptionExpiresAt()?->format(DATE_ATOM),
+            'expiresAt' => $expiresAt?->format(DATE_ATOM),
             'aiAnalysisUnlocked' => $tier->unlocksAi(),
+<<<<<<< HEAD
             'advancedReportsUnlocked' => $tier->unlocksAdvancedReports(),
+=======
+            'billingProvider' => $this->billingProvider(),
+>>>>>>> 4fd07e2 (feat(billing): add Stripe Checkout subscriptions with webhook renewals)
             'plans' => SubscriptionTier::catalog(),
         ];
     }
@@ -94,8 +136,14 @@ class SubscriptionService
                 throw new NotFoundHttpException('user.not_found');
             }
 
-            $locked->setSubscriptionTier(SubscriptionTier::Free->value);
-            $locked->setSubscriptionExpiresAt(null);
+            if ($this->billingProvider() === 'stripe' && $locked->getStripeSubscriptionId()) {
+                // Renewals stop at period end; webhook clears the tier afterwards.
+                $this->stripeBillingService->cancelSubscription($locked);
+            } else {
+                $locked->setSubscriptionTier(SubscriptionTier::Free->value);
+                $locked->setSubscriptionExpiresAt(null);
+                $locked->setStripeSubscriptionId(null);
+            }
             $this->em->flush();
 
             return $this->current($locked);

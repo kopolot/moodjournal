@@ -7,6 +7,10 @@ parameters:
     mailer.from_address: '%env(MAILER_FROM_ADDRESS)%'
     app.url: '%env(APP_URL)%'
     app.days_to_delete_disabled_user: '%env(APP_DAYS_TO_DELETE_DISABLED_USER)%'
+    env(STRIPE_SECRET_KEY): ''
+    env(STRIPE_WEBHOOK_SECRET): ''
+    env(STRIPE_PRICE_PLUS): ''
+    env(STRIPE_PRICE_PRO): ''
 
 services:
     # default configuration for services in *this* file
@@ -27,9 +31,18 @@ services:
         arguments:
             $moodCache: '@cache.mood'
 
+<<<<<<< HEAD
     App\Service\MoodAnalysisService:
         arguments:
             $moodCache: '@cache.mood'
+=======
+    App\Service\StripeBillingService:
+        arguments:
+            $stripeSecretKey: '%env(string:default::STRIPE_SECRET_KEY)%'
+            $stripeWebhookSecret: '%env(string:default::STRIPE_WEBHOOK_SECRET)%'
+            $stripePricePlus: '%env(string:default::STRIPE_PRICE_PLUS)%'
+            $stripePricePro: '%env(string:default::STRIPE_PRICE_PRO)%'
+>>>>>>> 4fd07e2 (feat(billing): add Stripe Checkout subscriptions with webhook renewals)
 
     Predis\Client:
         arguments:

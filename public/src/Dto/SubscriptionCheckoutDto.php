@@ -10,19 +10,17 @@ class SubscriptionCheckoutDto
     #[Assert\Choice(choices: ['plus', 'pro'])]
     public string $tier;
 
-    #[Assert\NotBlank]
-    #[Assert\Length(min: 12, max: 24)]
-    public string $cardNumber;
+    /** Mock checkout fields (required only when Stripe is disabled). */
+    public ?string $cardNumber = null;
 
-    #[Assert\NotBlank]
-    #[Assert\Regex(pattern: '/^\d{2}\/\d{2}$/')]
-    public string $expiry;
+    public ?string $expiry = null;
 
-    #[Assert\NotBlank]
-    #[Assert\Length(min: 3, max: 4)]
-    public string $cvc;
+    public ?string $cvc = null;
 
-    #[Assert\NotBlank]
-    #[Assert\Length(min: 2, max: 80)]
-    public string $cardholderName;
+    public ?string $cardholderName = null;
+
+    /** Stripe Checkout return URLs (required when Stripe is enabled). */
+    public ?string $successUrl = null;
+
+    public ?string $cancelUrl = null;
 }

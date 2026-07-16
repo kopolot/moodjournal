@@ -7,6 +7,7 @@ use App\Entity\User;
 use App\Enum\SubscriptionTier;
 use App\Response\ApiResponse;
 use App\Service\IdempotencyService;
+use App\Service\StripeBillingService;
 use App\Service\SubscriptionService;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
@@ -20,6 +21,7 @@ final class SubscriptionController extends AbstractController
 {
     public function __construct(
         private SubscriptionService $subscriptionService,
+        private StripeBillingService $stripeBillingService,
         private IdempotencyService $idempotencyService,
     ) {
     }
@@ -29,6 +31,7 @@ final class SubscriptionController extends AbstractController
     {
         return new ApiResponse('', true, Response::HTTP_OK, '', [
             'plans' => SubscriptionTier::catalog(),
+            'billingProvider' => $this->subscriptionService->billingProvider(),
         ]);
     }
 
@@ -54,10 +57,13 @@ final class SubscriptionController extends AbstractController
             hash('xxh128', $request->getContent()),
             function () use ($user, $dto): array {
                 $result = $this->subscriptionService->checkout($user, $dto);
+                $message = ($result['provider'] ?? 'mock') === 'stripe'
+                    ? 'subscription.checkout.created'
+                    : 'subscription.payment.success';
 
                 return [
                     'statusCode' => Response::HTTP_OK,
-                    'message' => 'subscription.payment.success',
+                    'message' => $message,
                     'data' => $result,
                 ];
             }
@@ -82,5 +88,16 @@ final class SubscriptionController extends AbstractController
             '',
             $this->subscriptionService->cancel($user)
         );
+    }
+
+    #[Route('/webhook', name: 'subscription.webhook', methods: ['POST'])]
+    public function webhook(Request $request): Response
+    {
+        $this->stripeBillingService->handleWebhook(
+            $request->getContent(),
+            $request->headers->get('Stripe-Signature')
+        );
+
+        return new Response('', Response::HTTP_NO_CONTENT);
     }
 }
